@@ -76,6 +76,10 @@ class MainActivity : AppCompatActivity() {
   private lateinit var accessBody: TextView
   private lateinit var accessButton: MaterialButton
 
+  private lateinit var overlaySwitch: MaterialSwitch
+  private lateinit var overlayBody: TextView
+  private lateinit var overlayButton: MaterialButton
+
   override fun onCreate(savedInstanceState: Bundle?) {
     DynamicColors.applyToActivityIfAvailable(this)
     super.onCreate(savedInstanceState)
@@ -114,6 +118,7 @@ class MainActivity : AppCompatActivity() {
   override fun onResume() {
     super.onResume()
     refreshAccessState()
+    refreshOverlayState()
     // Once access is granted on the first page, glide to "how it works".
     if (!config.onboardingComplete && hasAccess() && pager.currentItem == 0) {
       pager.setCurrentItem(1, true)
@@ -340,7 +345,35 @@ class MainActivity : AppCompatActivity() {
     setupDemoVideo(mainContainer, R.id.mainDemoPlayer, R.id.mainDemoMock)
     setupCastCode()
     setupCastTvButton()
+    setupOverlayCard()
     buildCategoryRows()
+  }
+
+  private fun setupOverlayCard() {
+    overlaySwitch = findViewById(R.id.overlaySwitch)
+    overlayBody = findViewById(R.id.overlayBody)
+    overlayButton = findViewById(R.id.overlayButton)
+    overlaySwitch.isChecked = config.seekbarOverlayEnabled
+    overlaySwitch.setOnCheckedChangeListener { _, checked ->
+      config.seekbarOverlayEnabled = checked
+    }
+    overlayButton.setOnClickListener { openAccessibilitySettings() }
+  }
+
+  private fun refreshOverlayState() {
+    val on = hasAccessibility()
+    overlayButton.text =
+      if (on) {
+        "Manage accessibility"
+      } else {
+        "Enable accessibility"
+      }
+    overlayBody.text =
+      if (on) {
+        "Colored SponsorBlock bars are painted on the YouTube seekbar as you watch."
+      } else {
+        "Turn on the “SponsorBlock seekbar overlay” accessibility service to paint segment bars on YouTube’s seekbar."
+      }
   }
 
   private fun setupCastTvButton() {
@@ -478,6 +511,18 @@ class MainActivity : AppCompatActivity() {
   private fun hasAccess() = NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
 
   private fun openNotificationSettings() = startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+
+  private fun openAccessibilitySettings() = startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+
+  /** True once the user has enabled our seekbar-overlay accessibility service in system settings. */
+  private fun hasAccessibility(): Boolean {
+    val enabled =
+      Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+        ?: return false
+    val component = "$packageName/.overlay.SeekbarAccessibilityService"
+    val flat = "$packageName/$packageName.overlay.SeekbarAccessibilityService"
+    return enabled.split(':').any { it == component || it == flat }
+  }
 
   private fun themeColor(attr: Int): Int {
     val tv = android.util.TypedValue()
