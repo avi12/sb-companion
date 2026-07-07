@@ -18,3 +18,6 @@ Thumbs.db
 
 # Claude Code local tooling (machine-specific hooks & permissions)
 .claude/
+
+# RE scratch (pulled APKs, uiautomator dumps)
+.re/
