@@ -63,6 +63,7 @@ class SbNotificationListenerService : NotificationListenerService() {
   override fun onNotificationPosted(sbn: StatusBarNotification?) = Unit
 
   private fun onActiveController(c: MediaController?) {
+    android.util.Log.i("SBco", "active session: ${c?.packageName ?: "none"}")
     if (c?.sessionToken == controller?.sessionToken) {
       return
     }

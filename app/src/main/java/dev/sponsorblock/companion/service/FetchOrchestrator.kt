@@ -1,5 +1,6 @@
 package dev.sponsorblock.companion.service
 
+import android.util.Log
 import dev.sponsorblock.companion.Config
 import dev.sponsorblock.companion.cast.CastCapture
 import dev.sponsorblock.companion.media.SkipEngine
@@ -40,7 +41,13 @@ class FetchOrchestrator(
     if (title.isNullOrBlank()) {
       return
     }
-    currentMeta = Triple(title, artist, durationMs)
+    val next = Triple(title, artist, durationMs)
+    // The session emits metadata twice on attach (initial read + first callback); skip the
+    // duplicate so we don't kick off a second, redundant videoId resolve for the same track.
+    if (next == currentMeta) {
+      return
+    }
+    currentMeta = next
     launchFetch()
   }
 
@@ -65,13 +72,18 @@ class FetchOrchestrator(
         val all =
           runCatching {
             sb.fetch(videoId, config.enabledCategories)
-          }.getOrDefault(emptyList())
+          }.onFailure { Log.w(TAG, "segment fetch failed for $videoId", it) }.getOrDefault(emptyList())
         val skippable =
           all
             .filter { it.actionType == "skip" }
             .map { it.copy(autoSkip = config.isAutoSkip(it.category)) }
+        Log.i(TAG, "$videoId: ${all.size} segments, ${skippable.count { it.autoSkip }} auto-skip")
         engineProvider()?.setSegments(skippable)
         OverlayState.publish(all, durationMs / 1000.0)
       }
+  }
+
+  private companion object {
+    const val TAG = "SBco"
   }
 }
