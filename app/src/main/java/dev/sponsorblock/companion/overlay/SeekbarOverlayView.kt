@@ -21,6 +21,7 @@ class SeekbarOverlayView(
 ) : View(context) {
   private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
   private val rect = RectF()
+  private val loc = IntArray(2)
   private val density = resources.displayMetrics.density
 
   /** Screen-space bounds of the YouTube seekbar, or null to draw nothing. */
@@ -41,21 +42,29 @@ class SeekbarOverlayView(
       return
     }
 
+    // barBounds are ABSOLUTE screen coordinates (getBoundsInScreen), but our overlay window may be
+    // inset from the screen origin (e.g. it starts below the status bar in portrait, so the window's
+    // top is at screen y=173). Convert to view-local coordinates by subtracting the view's on-screen
+    // location, or every bar lands offset by the inset (the "bars below the seekbar" bug).
+    getLocationOnScreen(loc)
+    val offX = loc[0].toFloat()
+    val offY = loc[1].toFloat()
+
     // Where to put the thin strip vertically. A thin bar node → center it. A tall node is a
     // full-player container (portrait's watch_while_time_bar_view*) whose track sits at the BOTTOM
     // edge, so anchor there instead of painting across the middle of the video.
     val thickness = (BAR_DP * density).coerceAtMost(b.height().toFloat())
     val tall = b.height() > TALL_NODE_DP * density
     val cy =
-      if (tall) {
+      (if (tall) {
         b.bottom - thickness / 2f
       } else {
         b.exactCenterY()
-      }
+      }) - offY
     val top = cy - thickness / 2f
     val bottom = cy + thickness / 2f
     val radius = thickness / 2f
-    val left = b.left.toFloat()
+    val left = b.left.toFloat() - offX
     val widthPx = b.width().toFloat()
 
     for (seg in OverlayState.segments) {
