@@ -1,0 +1,17 @@
+# Android / Gradle
+.gradle/
+build/
+app/build/
+local.properties
+*.apk
+captures/
+
+# Node (fake screen)
+node_modules/
+tools/fakescreen/.node-persist/
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db

@@ -1,0 +1,14 @@
+{
+  "name": "sb-fakescreen",
+  "version": "1.0.0",
+  "description": "Fake YouTube Lounge screen that captures the videoId cast to it (cast-grab PoC)",
+  "main": "capture.mjs",
+  "scripts": {
+    "start": "node capture.mjs"
+  },
+  "type": "commonjs",
+  "license": "ISC",
+  "dependencies": {
+    "yt-cast-receiver": "^2.1.0"
+  }
+}
