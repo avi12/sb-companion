@@ -60,6 +60,8 @@ class SbNotificationListenerService : NotificationListenerService() {
     engine?.detach()
     engine = null
     controller = null
+    dev.sponsorblock.companion.overlay.OverlayState
+      .clear()
   }
 
   // We don't consume posted notifications; media discovery is via MediaSessionManager.
@@ -73,6 +75,8 @@ class SbNotificationListenerService : NotificationListenerService() {
     controller = c
     currentMeta = null
     lastFetchedId = null
+    dev.sponsorblock.companion.overlay.OverlayState
+      .clear()
     if (c == null) {
       engine = null
       return
@@ -99,7 +103,7 @@ class SbNotificationListenerService : NotificationListenerService() {
 
   /** Resolves the videoId (captured cast id first) and fetches its segments for the local session. */
   private fun launchFetch() {
-    val (title, artist, _) = currentMeta ?: return
+    val (title, artist, durationMs) = currentMeta ?: return
     fetchJob?.cancel()
     fetchJob =
       scope.launch {
@@ -113,12 +117,21 @@ class SbNotificationListenerService : NotificationListenerService() {
         }
         lastFetchedId = videoId
         engine?.setSegments(emptyList()) // clear stale segments immediately
-        val segments =
+        dev.sponsorblock.companion.overlay.OverlayState
+          .clear()
+        // Fetch all action types so the seekbar overlay can paint highlights/chapters too;
+        // the skip engine still only acts on skip-type, auto-enabled segments.
+        val all =
           runCatching {
-            sb.fetch(videoId, config.enabledCategories, listOf("skip"))
+            sb.fetch(videoId, config.enabledCategories)
           }.getOrDefault(emptyList())
+        val skippable =
+          all
+            .filter { it.actionType == "skip" }
             .map { it.copy(autoSkip = config.isAutoSkip(it.category)) }
-        engine?.setSegments(segments)
+        engine?.setSegments(skippable)
+        dev.sponsorblock.companion.overlay.OverlayState
+          .publish(all, durationMs / 1000.0)
       }
   }
 
