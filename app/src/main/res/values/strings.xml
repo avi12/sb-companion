@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SponsorBlock Companion</string>
+    <string name="accessibility_label">SponsorBlock seekbar overlay</string>
+    <string name="accessibility_description">Reads the position of YouTube\'s seekbar so SponsorBlock Companion can paint the colored segment bars on top of it. It only reads the seekbar\'s position — it never taps or controls YouTube.</string>
 </resources>

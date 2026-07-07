@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Read-only accessibility service: it only reads YouTube's node bounds to position the seekbar
+  overlay. It never performs actions on YouTube's UI.
+
+  Not scoped with android:packageNames — we must also see the window-state change when the user
+  LEAVES YouTube, so the overlay can hide. Non-target events are dropped cheaply in code.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged|typeViewScrolled"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/accessibility_description"
+    android:notificationTimeout="100" />

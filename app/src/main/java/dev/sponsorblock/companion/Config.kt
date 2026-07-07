@@ -23,6 +23,11 @@ class Config(
     get() = prefs.getBoolean(KEY_TV_INSTALLED, true)
     set(v) = prefs.edit().putBoolean(KEY_TV_INSTALLED, v).apply()
 
+  /** Whether to paint segment bars on the YouTube seekbar (needs the accessibility service on). */
+  var seekbarOverlayEnabled: Boolean
+    get() = prefs.getBoolean(KEY_OVERLAY, true)
+    set(v) = prefs.edit().putBoolean(KEY_OVERLAY, v).apply()
+
   /** Whether the first-run onboarding (grant + how-it-works) has been completed. */
   var onboardingComplete: Boolean
     get() = prefs.getBoolean(KEY_ONBOARDED, false)
@@ -70,6 +75,7 @@ class Config(
     private const val KEY_SERVER = "server"
     private const val KEY_MANUAL_ID = "manual_video_id"
     private const val KEY_ONBOARDED = "onboarding_complete"
+    private const val KEY_OVERLAY = "seekbar_overlay_enabled"
     private const val KEY_TV_INSTALLED = "cast_tv_installed"
     private const val KEY_DEVICE_ID = "device_id"
     private const val KEY_SCREEN_ID = "screen_id"
