@@ -43,7 +43,7 @@ class CapturePlayer extends Player {
 }
 
 const receiver = new YouTubeCastReceiver(new CapturePlayer(), {
-  device: { name: 'SB-Test-Screen', screenName: 'SB-Test-Screen' },
+  device: { name: 'SponsorBlock TV', screenName: 'SponsorBlock TV' },
   logLevel: 'warn',
 });
 

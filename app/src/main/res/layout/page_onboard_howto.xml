@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingHorizontal="32dp"
+        android:paddingTop="72dp"
+        android:paddingBottom="88dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="How it works"
+            android:textAppearance="@style/TextAppearance.SbCompanion.Display"
+            android:textColor="?attr/colorOnSurface" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="Cast a video to this device to hand it the exact video, then watch it skip."
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <!-- Showcase mock -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="?attr/colorSurfaceVariant">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:background="@drawable/track"
+                    android:backgroundTint="?attr/colorOutlineVariant">
+
+                    <TextView
+                        android:id="@+id/demoMock"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="▶"
+                        android:textSize="44sp"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <androidx.media3.ui.PlayerView
+                        android:id="@+id/demoPlayer"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:surface_type="texture_view"
+                        app:resize_mode="fit"
+                        app:use_controller="true" />
+                </FrameLayout>
+
+                <!-- seekbar with colored segments -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="12dp"
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal"
+                    android:weightSum="100"
+                    android:background="@drawable/track"
+                    android:backgroundTint="?attr/colorOutlineVariant">
+
+                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="8" />
+                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="16"
+                        android:background="@drawable/track" android:backgroundTint="#00d400" />
+                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="30" />
+                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="10"
+                        android:background="@drawable/track" android:backgroundTint="#00ffff" />
+                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="22" />
+                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="14"
+                        android:background="@drawable/track" android:backgroundTint="#ff9900" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Steps -->
+        <LinearLayout
+            android:id="@+id/step1"
+            style="@style/OnboardStepRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp">
+            <TextView style="@style/OnboardStepNum" android:text="1" />
+            <TextView style="@style/OnboardStepText"
+                android:text="Open a video in the YouTube app" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/OnboardStepRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+            <TextView style="@style/OnboardStepNum" android:text="2" />
+            <TextView
+                android:id="@+id/step2Text"
+                style="@style/OnboardStepText"
+                android:text="Tap Cast and pick this device" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/OnboardStepRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+            <TextView style="@style/OnboardStepNum" android:text="3" />
+            <TextView style="@style/OnboardStepText"
+                android:text="Disconnect from SponsorBlock TV - playback returns to your phone" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/OnboardStepRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+            <TextView style="@style/OnboardStepNum" android:text="4" />
+            <TextView style="@style/OnboardStepText"
+                android:text="Sponsor segments skip automatically" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/startButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Get started"
+            app:cornerRadius="20dp" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
