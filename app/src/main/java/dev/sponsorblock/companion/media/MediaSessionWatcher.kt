@@ -12,27 +12,27 @@ import android.media.session.MediaSessionManager
  * apps' sessions without the privileged MEDIA_CONTENT_CONTROL permission.
  */
 class MediaSessionWatcher(
-    context: Context,
-    private val targetPackages: Set<String>,
-    private val listenerComponent: ComponentName,
-    private val onActiveController: (MediaController?) -> Unit,
+  context: Context,
+  private val targetPackages: Set<String>,
+  private val listenerComponent: ComponentName,
+  private val onActiveController: (MediaController?) -> Unit,
 ) {
-    private val msm =
-        context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+  private val msm =
+    context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
 
-    private val listener =
-        MediaSessionManager.OnActiveSessionsChangedListener { controllers -> emit(controllers) }
+  private val listener =
+    MediaSessionManager.OnActiveSessionsChangedListener { controllers -> emit(controllers) }
 
-    fun start() {
-        msm.addOnActiveSessionsChangedListener(listener, listenerComponent)
-        emit(msm.getActiveSessions(listenerComponent))
-    }
+  fun start() {
+    msm.addOnActiveSessionsChangedListener(listener, listenerComponent)
+    emit(msm.getActiveSessions(listenerComponent))
+  }
 
-    fun stop() {
-        runCatching { msm.removeOnActiveSessionsChangedListener(listener) }
-    }
+  fun stop() {
+    runCatching { msm.removeOnActiveSessionsChangedListener(listener) }
+  }
 
-    private fun emit(controllers: List<MediaController>?) {
-        onActiveController(controllers?.firstOrNull { it.packageName in targetPackages })
-    }
+  private fun emit(controllers: List<MediaController>?) {
+    onActiveController(controllers?.firstOrNull { it.packageName in targetPackages })
+  }
 }

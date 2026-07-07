@@ -29,64 +29,68 @@ import java.util.concurrent.atomic.AtomicLong
  */
 @RunWith(AndroidJUnit4::class)
 class SkipEngineInstrumentedTest {
+  @Test
+  fun seeksPastSegmentWhenPlayingInsideIt() {
+    val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+    val latch = CountDownLatch(1)
+    val seekedTo = AtomicLong(-1)
 
-    @Test
-    fun seeksPastSegmentWhenPlayingInsideIt() {
-        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
-        val latch = CountDownLatch(1)
-        val seekedTo = AtomicLong(-1)
+    val thread = HandlerThread("session").apply { start() }
+    val handler = Handler(thread.looper)
 
-        val thread = HandlerThread("session").apply { start() }
-        val handler = Handler(thread.looper)
-
-        lateinit var session: MediaSession
-        handler.post {
-            session = MediaSession(ctx, "sb-test").apply {
-                setCallback(object : MediaSession.Callback() {
-                    override fun onSeekTo(pos: Long) {
-                        seekedTo.set(pos)
-                        latch.countDown()
-                    }
-                }, handler)
-                setMetadata(
-                    MediaMetadata.Builder()
-                        .putString(MediaMetadata.METADATA_KEY_TITLE, "Test Video")
-                        .putString(MediaMetadata.METADATA_KEY_ARTIST, "Test Channel")
-                        .putLong(MediaMetadata.METADATA_KEY_DURATION, 600_000L)
-                        .build(),
-                )
-                setPlaybackState(
-                    PlaybackState.Builder()
-                        .setState(
-                            PlaybackState.STATE_PLAYING,
-                            5_000L,               // position: 5.0 s (inside the 5–10 s segment)
-                            1.0f,
-                            SystemClock.elapsedRealtime(),
-                        )
-                        .setActions(PlaybackState.ACTION_SEEK_TO)
-                        .build(),
-                )
-                isActive = true
-            }
+    lateinit var session: MediaSession
+    handler.post {
+      session =
+        MediaSession(ctx, "sb-test").apply {
+          setCallback(
+            object : MediaSession.Callback() {
+              override fun onSeekTo(pos: Long) {
+                seekedTo.set(pos)
+                latch.countDown()
+              }
+            },
+            handler
+          )
+          setMetadata(
+            MediaMetadata
+              .Builder()
+              .putString(MediaMetadata.METADATA_KEY_TITLE, "Test Video")
+              .putString(MediaMetadata.METADATA_KEY_ARTIST, "Test Channel")
+              .putLong(MediaMetadata.METADATA_KEY_DURATION, 600_000L)
+              .build(),
+          )
+          setPlaybackState(
+            PlaybackState
+              .Builder()
+              .setState(
+                PlaybackState.STATE_PLAYING,
+                5_000L, // position: 5.0 s (inside the 5–10 s segment)
+                1.0f,
+                SystemClock.elapsedRealtime(),
+              ).setActions(PlaybackState.ACTION_SEEK_TO)
+              .build(),
+          )
+          isActive = true
         }
-        Thread.sleep(300) // let the session publish
-
-        val engine = SkipEngine(controller = session.controller, handler = handler)
-        handler.post {
-            engine.attach()
-            engine.setSegments(
-                listOf(Segment(5.0, 10.0, "sponsor", "skip", "uuid-1", autoSkip = true)),
-            )
-        }
-
-        assertTrue("seekTo was never called — the engine did not skip", latch.await(5, TimeUnit.SECONDS))
-        val target = seekedTo.get()
-        assertTrue("seek target $target ms should be just past the 10 s segment end", target in 10_000L..11_000L)
-
-        handler.post {
-            engine.detach()
-            session.release()
-        }
-        thread.quitSafely()
     }
+    Thread.sleep(300) // let the session publish
+
+    val engine = SkipEngine(controller = session.controller, handler = handler)
+    handler.post {
+      engine.attach()
+      engine.setSegments(
+        listOf(Segment(5.0, 10.0, "sponsor", "skip", "uuid-1", autoSkip = true)),
+      )
+    }
+
+    assertTrue("seekTo was never called — the engine did not skip", latch.await(5, TimeUnit.SECONDS))
+    val target = seekedTo.get()
+    assertTrue("seek target $target ms should be just past the 10 s segment end", target in 10_000L..11_000L)
+
+    handler.post {
+      engine.detach()
+      session.release()
+    }
+    thread.quitSafely()
+  }
 }
