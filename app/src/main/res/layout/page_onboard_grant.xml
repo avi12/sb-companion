@@ -16,6 +16,7 @@
         android:layout_width="140dp"
         android:layout_height="140dp"
         android:gravity="center"
+        android:includeFontPadding="false"
         android:text="🔔"
         android:textSize="64sp"
         android:background="@drawable/hero_circle"
