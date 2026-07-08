@@ -4,8 +4,18 @@ Adds SponsorBlock auto-skip to the **unmodified** stock YouTube / YT Music Andro
 patched APK. It reads the app's `MediaSession` via a notification listener, gets the video ID,
 fetches segments from the SponsorBlock server, and seeks past them with `transportControls.seekTo()`.
 
-**Status:** the skip engine is built and verified (instrumented test + a live intro-skip on real
-YouTube). Video-ID acquisition (resolver + cast-grab) and the seekbar overlay are the remaining work.
+**Status:** working end-to-end on real devices (Pixel 10 + emulator) for both **stock YouTube and
+YT Music**: the skip engine (instrumented test + live skips), videoID resolution, segment fetch, and
+the seekbar overlay that paints SponsorBlock segments on the player's scrubber.
+
+![Seekbar overlay painting SponsorBlock segments on the stock YouTube scrubber — a blue preview
+marker at the start and a yellow self-promo marker at ~18%, shown zoomed below the
+player.](docs/img/seekbar-overlay-demo.png)
+
+*The overlay is drawn by an AccessibilityService in a `TYPE_ACCESSIBILITY_OVERLAY` window; it paints
+only while the player controls (and thus the scrubber) are on screen. See
+`docs/youtube-seekbar-reversing.md` and `docs/ytmusic-seekbar-reversing.md` for the node-matching
+reverse-engineering per app.*
 
 ## Start here
 - **`docs/RESEARCH.md`** — everything learned + done, exact reproduction commands, and next steps. Read this first.
