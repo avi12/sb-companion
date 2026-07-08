@@ -2,6 +2,7 @@ package dev.sponsorblock.companion.ui
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -175,20 +176,50 @@ class MainScreenController(
 
   private fun refreshAccessState() {
     if (activity.hasNotificationAccess()) {
-      accessCard.setCardBackgroundColor(activity.themeColor(com.google.android.material.R.attr.colorTertiaryContainer))
-      accessTitle.setTextColor(activity.themeColor(com.google.android.material.R.attr.colorOnTertiaryContainer))
-      accessBody.setTextColor(activity.themeColor(com.google.android.material.R.attr.colorOnTertiaryContainer))
+      // Success moment → a tertiary (Material You "extra accent") surface.
+      styleAccessCard(AccentFamily.TERTIARY)
       accessTitle.text = "You're all set"
       accessBody.text = "Enabled segments are skipped automatically while you watch."
       accessButton.text = "Manage access"
     } else {
-      accessCard.setCardBackgroundColor(activity.themeColor(com.google.android.material.R.attr.colorPrimaryContainer))
-      accessTitle.setTextColor(activity.themeColor(com.google.android.material.R.attr.colorOnPrimaryContainer))
-      accessBody.setTextColor(activity.themeColor(com.google.android.material.R.attr.colorOnPrimaryContainer))
+      // Call to action → the primary accent surface.
+      styleAccessCard(AccentFamily.PRIMARY)
       accessTitle.text = "Access needed"
       accessBody.text =
         "Grant notification access so the app can watch the YouTube media session and skip for you."
       accessButton.text = "Grant access"
     }
+  }
+
+  /**
+   * Tints the access card as one coherent M3 accent family. The action is a high-emphasis *inverse*
+   * pill — filled with the container's on-color and labelled with the container color. `onX`↔`X` is
+   * the one pairing M3 guarantees ≥4.5:1, so the button stays legible on ANY palette. The default
+   * filled button (colorPrimary) — and even a same-family colorTertiary fill — can't: a Material You
+   * scheme derived from the wallpaper collapsed accent and accentContainer to the same lightness,
+   * making the button vanish into the card.
+   */
+  private fun styleAccessCard(family: AccentFamily) {
+    val container = activity.themeColor(family.container)
+    val onContainer = activity.themeColor(family.onContainer)
+    accessCard.setCardBackgroundColor(container)
+    accessTitle.setTextColor(onContainer)
+    accessBody.setTextColor(onContainer)
+    accessButton.backgroundTintList = ColorStateList.valueOf(onContainer)
+    accessButton.setTextColor(container)
+  }
+
+  private enum class AccentFamily(
+    val container: Int,
+    val onContainer: Int,
+  ) {
+    PRIMARY(
+      com.google.android.material.R.attr.colorPrimaryContainer,
+      com.google.android.material.R.attr.colorOnPrimaryContainer,
+    ),
+    TERTIARY(
+      com.google.android.material.R.attr.colorTertiaryContainer,
+      com.google.android.material.R.attr.colorOnTertiaryContainer,
+    ),
   }
 }
