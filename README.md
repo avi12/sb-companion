@@ -8,9 +8,7 @@ fetches segments from the SponsorBlock server, and seeks past them with `transpo
 YT Music**: the skip engine (instrumented test + live skips), videoID resolution, segment fetch, and
 the seekbar overlay that paints SponsorBlock segments on the player's scrubber.
 
-![Seekbar overlay painting SponsorBlock segments on the stock YouTube scrubber — a blue preview
-marker at the start and a yellow self-promo marker at ~18%, shown zoomed below the
-player.](docs/img/seekbar-overlay-demo.png)
+![Seekbar overlay painting SponsorBlock segments on the stock YouTube scrubber](docs/img/seekbar-overlay-demo.png)
 
 *The overlay is drawn by an AccessibilityService in a `TYPE_ACCESSIBILITY_OVERLAY` window; it paints
 only while the player controls (and thus the scrubber) are on screen. See
