@@ -1,9 +1,19 @@
+import java.util.Properties
+
 plugins {
   id("com.android.application")
   id("org.jetbrains.kotlin.android")
   id("org.jlleitschuh.gradle.ktlint")
   id("io.gitlab.arturbosch.detekt")
 }
+
+// Release signing creds live in local.properties (git-ignored), never in VCS.
+val localProps =
+  Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+  }
+val hasReleaseSigning = localProps.getProperty("RELEASE_STORE_FILE") != null
 
 android {
   namespace = "dev.sponsorblock.companion"
@@ -18,9 +28,23 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  signingConfigs {
+    if (hasReleaseSigning) {
+      create("release") {
+        storeFile = rootProject.file(localProps.getProperty("RELEASE_STORE_FILE"))
+        storePassword = localProps.getProperty("RELEASE_STORE_PASSWORD")
+        keyAlias = localProps.getProperty("RELEASE_KEY_ALIAS")
+        keyPassword = localProps.getProperty("RELEASE_KEY_PASSWORD")
+      }
+    }
+  }
+
   buildTypes {
     release {
       isMinifyEnabled = false
+      if (hasReleaseSigning) {
+        signingConfig = signingConfigs.getByName("release")
+      }
     }
   }
   compileOptions {
