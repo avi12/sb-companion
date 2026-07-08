@@ -14,7 +14,7 @@ android {
     minSdk = 29 // Android 10 — MediaSession + notification-listener are stable here
     targetSdk = 34
     versionCode = 1
-    versionName = "0.1"
+    versionName = "0.0.0"
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 

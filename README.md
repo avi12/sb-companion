@@ -46,3 +46,6 @@ docs/                    RESEARCH.md + research.html
 JAVA_HOME=<jdk17> ./gradlew connectedAndroidTest   # SkipEngineInstrumentedTest
 ```
 See `docs/RESEARCH.md` for the live stock-YouTube and cast-grab reproduction steps.
+
+## License
+GPL-3.0 — see [`LICENSE`](LICENSE). (Matches SponsorBlock's own license.)
