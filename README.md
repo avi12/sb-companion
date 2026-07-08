@@ -18,7 +18,6 @@ reverse-engineering per app.*
 ## Start here
 - **`docs/RESEARCH.md`** — everything learned + done, exact reproduction commands, and next steps. Read this first.
 - **`docs/research.html`** — the visual version (diagrams, RE evidence, screenshots).
-- **`HANDOFF.md`** — build + emulator-verify protocol.
 
 ## Build & run
 ```bash

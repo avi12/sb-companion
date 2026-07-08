@@ -14,7 +14,7 @@ import java.net.URLEncoder
  * "title channel". It can pick a re-upload or the wrong ATV/OMV twin. The caller MUST validate
  * with the duration cross-check (durationMatches) and fail closed when uncertain.
  *
- * For exact IDs (user uploads, ambiguous titles) the cast-grab path is the fallback — see HANDOFF.md.
+ * For exact IDs (user uploads, ambiguous titles) the cast-grab path is the fallback — see docs/RESEARCH.md.
  */
 object VideoIdResolver {
   private val client = OkHttpClient()
