@@ -131,6 +131,20 @@ class DemoPlayerController(
     TransitionManager.beginDelayedTransition(rootFrame, transform)
   }
 
+  /**
+   * Pause every looping preview so they stop decoding video while the app isn't visible — call from
+   * the host Activity's onStop. Left running, these muted loops keep the codec/GPU busy in the
+   * background and drain the battery for no visible benefit.
+   */
+  fun pauseAll() {
+    players.forEach { it.playWhenReady = false }
+  }
+
+  /** Resume the looping previews when the app returns to the foreground — call from onStart. */
+  fun resumeAll() {
+    players.forEach { it.playWhenReady = true }
+  }
+
   /** Releases every preview player; call from the host Activity's onDestroy. */
   fun release() {
     players.forEach { it.release() }

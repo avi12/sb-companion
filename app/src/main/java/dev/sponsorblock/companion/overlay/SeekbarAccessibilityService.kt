@@ -115,6 +115,21 @@ class SeekbarAccessibilityService : AccessibilityService() {
       val quality = seekbarQuality(node)
       if (quality > 0) {
         val r = Rect().also { node.getBoundsInScreen(it) }
+        // YT Music exposes the scrubber as a bare `android.widget.SeekBar` with NO id, whose bounds
+        // overshoot the real track ([0..2424] vs the track's [0..2298]). Painting across that width
+        // shifts/compresses every bar. The wrapping `time_bar_container` is the tighter, correct
+        // extent — use it when we can (see docs/ytmusic-seekbar-reversing.md).
+        if (quality == 4 && id.isNullOrEmpty()) {
+          node.parent?.let { p ->
+            val pid = p.viewIdResourceName
+            if (pid != null && CONTAINER_ID_SUFFIXES.any { pid.endsWith(it) }) {
+              val pr = Rect().also { p.getBoundsInScreen(it) }
+              if (pr.width() > MIN_BAR_WIDTH_PX) {
+                r.set(pr)
+              }
+            }
+          }
+        }
         // An exact id (quality 3) is trusted on its own; weaker signals (TimeBar class / RangeInfo)
         // must be wide-and-short so we don't grab a volume or settings slider.
         val accept = r.width() > MIN_BAR_WIDTH_PX && (quality >= 3 || r.width() > r.height() * 2)
@@ -199,6 +214,10 @@ class SeekbarAccessibilityService : AccessibilityService() {
         "/watch_while_time_bar_view_overlay",
         "/watch_while_time_bar_view",
       )
+
+    // YT Music's scrubber has no id of its own; its parent RelativeLayout carries this and its
+    // bounds are the true track extent (tighter than the overshooting SeekBar node).
+    private val CONTAINER_ID_SUFFIXES = listOf("/time_bar_container")
 
     // Present only while the player controls are on screen — our "seekbar is visible" signal.
     private val CONTROLS_MARKER_SUFFIXES =

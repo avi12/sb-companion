@@ -80,6 +80,17 @@ class MainActivity : AppCompatActivity() {
     super.onDestroy()
   }
 
+  override fun onStart() {
+    super.onStart()
+    demo.resumeAll()
+  }
+
+  override fun onStop() {
+    // Stop the looping demo previews from decoding video in the background (battery).
+    demo.pauseAll()
+    super.onStop()
+  }
+
   override fun onResume() {
     super.onResume()
     mainScreen.onResume()
