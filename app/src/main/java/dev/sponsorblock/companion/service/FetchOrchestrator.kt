@@ -28,7 +28,7 @@ class FetchOrchestrator(
   // A cast can temporarily remove/recreate the local media session. Keep an exact id for its
   // matching metadata across that hand-off, then discard it as soon as a different track appears.
   private var capturedId: String? = null
-  private var capturedForMeta: Triple<String, String?, Long>? = null
+  private var capturedForTrack: TrackKey? = null
   // Keep the most recent response. A controller can be recreated as a cast connects/disconnects
   // while its metadata is unchanged; the new SkipEngine still needs the segments even though a
   // second network request would be redundant.
@@ -55,9 +55,9 @@ class FetchOrchestrator(
     if (next == currentMeta) {
       return
     }
-    if (capturedForMeta != null && capturedForMeta != next) {
+    if (capturedForTrack != null && capturedForTrack != next.trackKey()) {
       capturedId = null
-      capturedForMeta = null
+      capturedForTrack = null
     }
     currentMeta = next
     clearPublishedSegments()
@@ -69,16 +69,17 @@ class FetchOrchestrator(
     val meta = currentMeta ?: return
     CastCapture.takeVideoId()?.let { id ->
       capturedId = id
-      capturedForMeta = meta
+      capturedForTrack = meta.trackKey()
     }
     val (title, artist, durationMs) = meta
     fetchJob?.cancel()
     fetchJob =
       scope.launch {
         val videoId =
-          // A cast capture is an exact ID for this metadata. It survives the brief cast-session
-          // hand-off, but onNewVideo clears it before a later YT Music track can reuse it.
-          capturedId?.takeIf { capturedForMeta == meta }
+          // A cast capture is an exact ID for this title/artist. Casting can alter the MediaSession
+          // duration while it switches between local and remote playback, so duration must not
+          // discard the exact ID. A different track still clears it in onNewVideo.
+          capturedId?.takeIf { capturedForTrack == meta.trackKey() }
             ?: VideoIdResolver.resolve(title, artist.orEmpty())
             ?: return@launch
         val cached = cachedFetch
@@ -123,6 +124,13 @@ class FetchOrchestrator(
     val videoId: String,
     val segments: List<Segment>,
   )
+
+  private data class TrackKey(
+    val title: String,
+    val artist: String?,
+  )
+
+  private fun Triple<String, String?, Long>.trackKey(): TrackKey = TrackKey(first, second)
 
   private companion object {
     const val TAG = "SBco"
