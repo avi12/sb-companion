@@ -4,6 +4,7 @@ import android.util.Log
 import dev.sponsorblock.companion.Config
 import dev.sponsorblock.companion.cast.CastCapture
 import dev.sponsorblock.companion.media.SkipEngine
+import dev.sponsorblock.companion.model.Segment
 import dev.sponsorblock.companion.net.SponsorBlockClient
 import dev.sponsorblock.companion.net.VideoIdResolver
 import dev.sponsorblock.companion.overlay.OverlayState
@@ -28,13 +29,15 @@ class FetchOrchestrator(
   // matching metadata across that hand-off, then discard it as soon as a different track appears.
   private var capturedId: String? = null
   private var capturedForMeta: Triple<String, String?, Long>? = null
-  private var lastFetchedId: String? = null
+  // Keep the most recent response. A controller can be recreated as a cast connects/disconnects
+  // while its metadata is unchanged; the new SkipEngine still needs the segments even though a
+  // second network request would be redundant.
+  private var cachedFetch: CachedFetch? = null
   private var fetchJob: Job? = null
 
   /** Forget the current session's metadata/fetch state (called when the active controller changes). */
   fun reset() {
     currentMeta = null
-    lastFetchedId = null
   }
 
   /** New local metadata arrived — remember it and (re)fetch. Blank titles are ignored. */
@@ -57,6 +60,7 @@ class FetchOrchestrator(
       capturedForMeta = null
     }
     currentMeta = next
+    clearPublishedSegments()
     launchFetch()
   }
 
@@ -77,27 +81,48 @@ class FetchOrchestrator(
           capturedId?.takeIf { capturedForMeta == meta }
             ?: VideoIdResolver.resolve(title, artist.orEmpty())
             ?: return@launch
-        if (videoId == lastFetchedId) {
+        val cached = cachedFetch
+        if (cached?.videoId == videoId) {
+          publish(cached.segments, durationMs)
           return@launch
         }
-        lastFetchedId = videoId
-        engineProvider()?.setSegments(emptyList()) // clear stale segments immediately
-        OverlayState.clear()
         // Fetch all action types so the seekbar overlay can paint highlights/chapters too;
         // the skip engine still only acts on skip-type, auto-enabled segments.
         val all =
           runCatching {
             sb.fetch(videoId, config.enabledCategories)
-          }.onFailure { Log.w(TAG, "segment fetch failed for $videoId", it) }.getOrDefault(emptyList())
-        val skippable =
-          all
-            .filter { it.actionType == "skip" }
-            .map { it.copy(autoSkip = config.isAutoSkip(it.category)) }
-        Log.i(TAG, "$videoId: ${all.size} segments, ${skippable.count { it.autoSkip }} auto-skip")
-        engineProvider()?.setSegments(skippable)
-        OverlayState.publish(all, durationMs / 1000.0)
+          }.onFailure { Log.w(TAG, "segment fetch failed for $videoId", it) }.getOrNull()
+            ?: return@launch
+        cachedFetch = CachedFetch(videoId, all)
+        publish(all, durationMs)
       }
   }
+
+  private fun clearPublishedSegments() {
+    engineProvider()?.setSegments(emptyList())
+    OverlayState.clear()
+  }
+
+  private fun publish(
+    all: List<Segment>,
+    durationMs: Long,
+  ) {
+    val skippable =
+      all
+        .filter { it.actionType == "skip" }
+        .map { it.copy(autoSkip = config.isAutoSkip(it.category)) }
+    Log.i(
+      TAG,
+      "${cachedFetch?.videoId}: ${all.size} segments, ${skippable.count { it.autoSkip }} auto-skip",
+    )
+    engineProvider()?.setSegments(skippable)
+    OverlayState.publish(all, durationMs / 1000.0)
+  }
+
+  private data class CachedFetch(
+    val videoId: String,
+    val segments: List<Segment>,
+  )
 
   private companion object {
     const val TAG = "SBco"

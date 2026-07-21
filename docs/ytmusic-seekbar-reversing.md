@@ -45,7 +45,9 @@ uses under the hood).
 
 `time_bar_reference_view` is the exact left→right track extent, same trick as
 YouTube — and same limitation: a `Space` is not accessibility-exposed, so we
-can't read it. Use the SeekBar node bounds instead.
+can't read it. The bare SeekBar node is too broad, though: it covers the whole
+controls row. Use `time_bar_container`, then trim its left/right sides at the
+elapsed/total label edges plus the standard 8 dp label-to-track gap.
 
 ## Runtime exposure — the key difference from YouTube
 
@@ -69,17 +71,27 @@ bar is identical (bare `SeekBar`, rich `content-desc`, no id).
 So YouTube's "match `viewIdResourceName` ends with an id" rule does not fire
 here. Matching strategy for YT Music, in order:
 
-1. `className == android.widget.SeekBar` **and** node has a `RangeInfo`
-   (SeekBar always exposes one) — this is the scrubber, else
-2. its parent's `viewIdResourceName` ends with `time_bar_container`, else
+1. `className == android.widget.SeekBar` **and** node has a `RangeInfo` — this is
+   the scrubber. Current builds may omit `RangeInfo` specifically to an
+   AccessibilityService, so in that case require its parent
+   `viewIdResourceName` to end with `time_bar_container`, else
 3. a wide-and-short `RangeInfo` node near the bottom (geometry sanity filter),
    optionally confirmed by a `content-desc` matching `… of …` (elapsed of total).
 
-Use the bare `SeekBar` to identify the scrubber, then paint against its
+Use the bare `SeekBar` to identify the scrubber, then begin with its
 `time_bar_container` parent when present. On the live player the `SeekBar` bounds
 run through the right-side system/control inset (`[0..2424]`), while the container
-ends at the real drawable track extent (`[0..2298]`). Painting against the wider
-node compresses and shifts every SponsorBlock marker to the right.
+ends at `[0..2298]`. Neither is the drawable line: the displayed time labels occupy
+`[32..112]` and `[2218..2298]`, with an 8 dp gap to the line. Therefore the live
+track is approximately `[136..2194]`. Painting against either untrimmed node
+compresses and shifts every SponsorBlock marker; a short early segment is otherwise
+drawn beneath the elapsed-time label and appears missing.
+
+On the Pixel's current fullscreen player the accessibility API can flatten this subtree:
+the only available node is the bare `SeekBar` (`[0..2424]`) with a description like
+`2 minutes 14 seconds of 51 minutes 8 seconds`. In that narrow fallback, crop the
+known timer/chapters insets proportionally to `[134..2196]`; prefer the container and
+label bounds whenever they are exposed.
 
 ## Accessibility / seek support (confirmed)
 
