@@ -36,7 +36,11 @@ class SeekbarAccessibilityService : AccessibilityService() {
   override fun onServiceConnected() {
     windowManager = getSystemService(WindowManager::class.java)
     addOverlay()
-    OverlayState.onChange = { handler.post { overlay?.invalidate() } }
+    // Segment data can arrive after the player first emits its accessibility events. Re-scan once
+    // when it does, otherwise a seekbar that was already visible has no bounds to paint against
+    // until the user touches the player controls again.
+    OverlayState.onChange = { handler.post { scheduleRescan() } }
+    scheduleRescan()
   }
 
   override fun onUnbind(intent: android.content.Intent?): Boolean {
@@ -59,6 +63,10 @@ class SeekbarAccessibilityService : AccessibilityService() {
       return
     }
     // Coalesce the storm of events YouTube emits into a single debounced rescan.
+    scheduleRescan()
+  }
+
+  private fun scheduleRescan() {
     handler.removeCallbacks(rescan)
     handler.postDelayed(rescan, DEBOUNCE_MS)
   }
@@ -157,7 +165,7 @@ class SeekbarAccessibilityService : AccessibilityService() {
    */
   private fun seekbarQuality(node: AccessibilityNodeInfo): Int {
     val cls = node.className?.toString()
-    if (cls == "android.widget.SeekBar") {
+    if (cls == "android.widget.SeekBar" && node.rangeInfo != null) {
       return 4
     }
     val id = node.viewIdResourceName
@@ -197,7 +205,9 @@ class SeekbarAccessibilityService : AccessibilityService() {
   }
 
   companion object {
-    private const val DEBOUNCE_MS = 100L
+    // Bounds only change when controls/layout change, not for every playback-position update.
+    // This keeps the accessibility tree walk cheap while a player is foregrounded.
+    private const val DEBOUNCE_MS = 250L
     private const val MAX_NODES = 3000
     private const val MIN_BAR_WIDTH_PX = 240
     // Real ids from YouTube 21.26.364 (aapt2 dump). The InlineTimeBarWrapper scrubber carries a
@@ -224,6 +234,7 @@ class SeekbarAccessibilityService : AccessibilityService() {
       listOf(
         "/time_bar_current_time",
         "/player_control_play_pause_replay_button",
+        "/mini_player_play_pause_replay_button",
       )
   }
 }

@@ -23,6 +23,11 @@ class FetchOrchestrator(
   private val engineProvider: () -> SkipEngine?
 ) {
   @Volatile private var currentMeta: Triple<String, String?, Long>? = null
+
+  // A cast can temporarily remove/recreate the local media session. Keep an exact id for its
+  // matching metadata across that hand-off, then discard it as soon as a different track appears.
+  private var capturedId: String? = null
+  private var capturedForMeta: Triple<String, String?, Long>? = null
   private var lastFetchedId: String? = null
   private var fetchJob: Job? = null
 
@@ -47,18 +52,29 @@ class FetchOrchestrator(
     if (next == currentMeta) {
       return
     }
+    if (capturedForMeta != null && capturedForMeta != next) {
+      capturedId = null
+      capturedForMeta = null
+    }
     currentMeta = next
     launchFetch()
   }
 
   /** Resolves the videoId (captured cast id first) and fetches its segments for the local session. */
   fun launchFetch() {
-    val (title, artist, durationMs) = currentMeta ?: return
+    val meta = currentMeta ?: return
+    CastCapture.takeVideoId()?.let { id ->
+      capturedId = id
+      capturedForMeta = meta
+    }
+    val (title, artist, durationMs) = meta
     fetchJob?.cancel()
     fetchJob =
       scope.launch {
         val videoId =
-          CastCapture.videoId
+          // A cast capture is an exact ID for this metadata. It survives the brief cast-session
+          // hand-off, but onNewVideo clears it before a later YT Music track can reuse it.
+          capturedId?.takeIf { capturedForMeta == meta }
             ?: VideoIdResolver.resolve(title, artist.orEmpty())
             ?: return@launch
         if (videoId == lastFetchedId) {

@@ -2,8 +2,10 @@ package dev.sponsorblock.companion.cast
 
 /**
  * Bridges the cast receiver and the rest of the app.
- *  - [videoId]: the last videoId cast to "SponsorBlock TV"; the notification listener uses this exact
- *    id (instead of resolving title+channel) after the user disconnects and playback returns local.
+ *  - [videoId]: the next videoId cast to "SponsorBlock TV"; the notification listener consumes this
+ *    exact id (instead of resolving title+channel) after the user disconnects and playback returns
+ *    local. It is deliberately one-shot: keeping an old id would fetch the previous track's
+ *    segments for every later YT Music song.
  *  - [pairingCode]: the current "Link with TV code", surfaced in the UI for easy copy.
  */
 object CastCapture {
@@ -13,8 +15,16 @@ object CastCapture {
   @Volatile
   var videoId: String? = null
     set(value) {
-      field = value
+      synchronized(this) {
+        field = value
+      }
       value?.let { onCapture?.invoke(it) }
+    }
+
+  /** Returns and clears the pending exact id so it can only be applied to one local track. */
+  fun takeVideoId(): String? =
+    synchronized(this) {
+      videoId.also { videoId = null }
     }
 
   @Volatile

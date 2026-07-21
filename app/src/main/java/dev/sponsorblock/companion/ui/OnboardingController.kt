@@ -76,6 +76,7 @@ class OnboardingController(
           holder.itemView
             .findViewById<MaterialButton>(R.id.installButton)
             .setOnClickListener { view ->
+              config.castTvInstalled = true
               CastReceiverService.start(activity)
               (view as MaterialButton).text = "SponsorBlock TV ready"
               view.isEnabled = false

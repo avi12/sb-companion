@@ -104,9 +104,9 @@ class MainScreenController(
     fun render() {
       button.text =
         if (config.castTvInstalled) {
-          "Uninstall SponsorBlock TV"
+          "Disable SponsorBlock TV"
         } else {
-          "Reinstall SponsorBlock TV"
+          "Enable SponsorBlock TV"
         }
     }
     render()

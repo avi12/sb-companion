@@ -175,9 +175,15 @@ class LoungeClient(
 
   fun stop() {
     running = false
+    // Interrupt an in-flight no-timeout bind immediately. Merely flipping [running] would leave
+    // the networking thread and radio held until YouTube eventually closes the long-poll.
+    http.dispatcher.cancelAll()
   }
 
   private fun initSession() {
+    sid = null
+    gsessionid = null
+    lastAid = 0
     val rid = (41000..49999).random()
     val url =
       bindUrl { b ->

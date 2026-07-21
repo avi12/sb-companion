@@ -11,14 +11,16 @@ import android.util.Log
 import dev.sponsorblock.companion.Config
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
- * The on-phone "fake TV". Auto-started once notification access is granted (from the notification
- * listener's onListenerConnected). It stands up a Lounge screen named "SponsorBlock TV" so the
- * stock YouTube app can cast to it, and surfaces the pairing so the user can link it.
+ * The on-phone "fake TV". It runs only after the user explicitly enables SponsorBlock TV, then is
+ * restored by the notification listener while that setting remains enabled. It stands up a Lounge
+ * screen named "SponsorBlock TV" so the stock YouTube app can cast to it, and surfaces the pairing
+ * so the user can link it.
  *
  * Status: the pairing pipeline (screen id -> lounge token -> pairing code) is implemented and runs
  * here. The bind long-poll that captures the cast videoId — and then feeds the existing fetch ->
@@ -27,6 +29,8 @@ import kotlinx.coroutines.launch
 class CastReceiverService : Service() {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val config by lazy { Config(this) }
+  private var receiverJob: Job? = null
+  private var client: LoungeClient? = null
 
   override fun onBind(intent: Intent?): IBinder? = null
 
@@ -36,14 +40,20 @@ class CastReceiverService : Service() {
     startId: Int
   ): Int {
     startForeground(NOTIF_ID, notification("Starting SponsorBlock TV…"))
-    scope.launch { startReceiver() }
-    return START_STICKY
+    // A service can receive several start requests (listener reconnect, activity recreation, or a
+    // repeated tap). Starting a Lounge client for each one means several infinite long-polls and
+    // is a substantial background network/battery drain.
+    if (receiverJob?.isActive != true) {
+      receiverJob = scope.launch { startReceiver() }
+    }
+    return START_NOT_STICKY
   }
 
   private fun startReceiver() {
-    val client = LoungeClient(config.deviceId, Config.CAST_DEVICE_NAME, config.screenId)
+    val newClient = LoungeClient(config.deviceId, Config.CAST_DEVICE_NAME, config.screenId)
+    client = newClient
     val pairing =
-      runCatching { client.requestPairing() }
+      runCatching { newClient.requestPairing() }
         .onFailure { Log.w(TAG, "pairing failed", it) }
         .getOrNull()
 
@@ -58,9 +68,8 @@ class CastReceiverService : Service() {
     update("Ready to cast · code ${pairing.pairingCode.spaced()}")
 
     // Long-poll the bind channel; each videoId the user casts is stashed for the skip pipeline.
-    this.client = client
     runCatching {
-      client.bindAndCapture { videoId ->
+      newClient.bindAndCapture { videoId ->
         Log.i(TAG, "captured cast videoId=$videoId")
         CastCapture.videoId = videoId
         update("Got video $videoId — disconnect to skip")
@@ -68,10 +77,9 @@ class CastReceiverService : Service() {
     }.onFailure { Log.w(TAG, "bind channel ended", it) }
   }
 
-  private var client: LoungeClient? = null
-
   override fun onDestroy() {
     client?.stop()
+    receiverJob?.cancel()
     scope.cancel()
     super.onDestroy()
   }
@@ -108,7 +116,7 @@ class CastReceiverService : Service() {
     private const val CHANNEL = "cast_receiver"
     private const val NOTIF_ID = 43
 
-    /** Idempotent: start the fake TV. Safe to call whenever access is (re)granted. */
+    /** Idempotent: start the explicitly enabled fake TV receiver. */
     fun start(context: Context) {
       context.startForegroundService(Intent(context, CastReceiverService::class.java))
     }

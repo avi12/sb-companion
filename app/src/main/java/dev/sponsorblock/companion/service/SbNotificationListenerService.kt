@@ -18,6 +18,7 @@ import dev.sponsorblock.companion.overlay.OverlayState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * The only permission surface: enabling "Notification access" for this service authorizes
@@ -42,7 +43,9 @@ class SbNotificationListenerService : NotificationListenerService() {
       CastReceiverService.start(this)
     }
     // A freshly captured cast videoId should (re)fetch even if the local metadata didn't change.
-    CastCapture.onCapture = { fetcher.launchFetch() }
+    // LoungeClient invokes this from its IO worker; serialize fetch state changes on this
+    // service's main scope with the MediaController callbacks.
+    CastCapture.onCapture = { scope.launch { fetcher.launchFetch() } }
     val component = ComponentName(this, SbNotificationListenerService::class.java)
     watcher =
       MediaSessionWatcher(this, config.targetPackages, component) { c ->
@@ -53,6 +56,9 @@ class SbNotificationListenerService : NotificationListenerService() {
   override fun onListenerDisconnected() {
     CastCapture.onCapture = null
     watcher?.stop()
+    // Without notification access there is no local session to consume a captured id, so do not
+    // leave the opt-in Lounge long-poll running in the background.
+    CastReceiverService.stop(this)
     engine?.detach()
     engine = null
     controller = null

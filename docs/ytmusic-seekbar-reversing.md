@@ -75,10 +75,11 @@ here. Matching strategy for YT Music, in order:
 3. a wide-and-short `RangeInfo` node near the bottom (geometry sanity filter),
    optionally confirmed by a `content-desc` matching `… of …` (elapsed of total).
 
-`getBoundsInScreen()` on the SeekBar node gives the track rectangle to paint the
-SponsorBlock segment markers over. (Bounds run slightly wider than the container
-— [0..2424] vs the container's [0..2298] — so paint against the SeekBar node, not
-the container.)
+Use the bare `SeekBar` to identify the scrubber, then paint against its
+`time_bar_container` parent when present. On the live player the `SeekBar` bounds
+run through the right-side system/control inset (`[0..2424]`), while the container
+ends at the real drawable track extent (`[0..2298]`). Painting against the wider
+node compresses and shifts every SponsorBlock marker to the right.
 
 ## Accessibility / seek support (confirmed)
 
