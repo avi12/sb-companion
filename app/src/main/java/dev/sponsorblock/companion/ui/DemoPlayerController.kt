@@ -1,11 +1,9 @@
 package dev.sponsorblock.companion.ui
 
 import android.graphics.Color
-import android.net.Uri
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.PathInterpolator
-import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.media3.common.MediaItem
@@ -35,15 +33,8 @@ class DemoPlayerController(
   /** The inline PlayerView currently expanded (so we can morph back to it). */
   private var expandedFrom: PlayerView? = null
 
-  /** res/raw/demo.mp4 as a Media3 rawresource URI, or null if it isn't bundled. */
-  private val demoUri: Uri? by lazy {
-    val resId = activity.resources.getIdentifier("demo", "raw", activity.packageName)
-    if (resId == 0) {
-      null
-    } else {
-      RawResourceDataSource.buildRawResourceUri(resId)
-    }
-  }
+  /** The id of res/raw/demo.mp4, or 0 if it isn't bundled. */
+  private val demoResId by lazy { activity.resources.getIdentifier("demo", "raw", activity.packageName) }
 
   /** Whether the fullscreen overlay is currently showing. */
   val isExpanded: Boolean
@@ -59,7 +50,10 @@ class DemoPlayerController(
     playerViewId: Int,
     mockId: Int
   ) {
-    val uri = demoUri ?: return
+    if (demoResId == 0) {
+      return
+    }
+    val uri = RawResourceDataSource.buildRawResourceUri(demoResId)
     val playerView = page.findViewById<PlayerView>(playerViewId)
     val mock = page.findViewById<View>(mockId)
 

@@ -14,7 +14,7 @@ internal object SeekbarFinder {
     // line (and its container node) even after the controls auto-hide, so a bar node alone isn't
     // enough — we require a controls-only marker (the elapsed-time label / play-pause button) to be
     // present, and hide the overlay the moment it's gone.
-    var areControlsVisible = false
+    var isControlsVisible = false
 
     // Some current YT Music fullscreen variants expose only the progress SeekBar and omit both
     // the elapsed-time/play-pause nodes and the named container from accessibility, even while
@@ -52,8 +52,11 @@ internal object SeekbarFinder {
         node.getChild(i)?.let { queue.add(it to node) }
       }
     }
-    val isPlayerVisible = scan.areControlsVisible || scan.hasYtMusicTimeBar
-    return if (isPlayerVisible) scan.best else null
+    val isPlayerVisible = scan.isControlsVisible || scan.hasYtMusicTimeBar
+    if (!isPlayerVisible) {
+      return null
+    }
+    return scan.best
   }
 
   private fun inspect(
@@ -64,7 +67,7 @@ internal object SeekbarFinder {
   ) {
     val id = node.viewIdResourceName
     if (id != null && CONTROLS_MARKER_SUFFIXES.any { id.endsWith(it) }) {
-      scan.areControlsVisible = true
+      scan.isControlsVisible = true
     }
     val quality = seekbarQuality(node, parent)
     if (quality == QUALITY_NONE) {
@@ -77,7 +80,14 @@ internal object SeekbarFinder {
     // those labels too. Trim between the label edges to get the drawable track itself (see
     // docs/ytmusic-seekbar-reversing.md).
     if (quality == QUALITY_SEEKBAR && id.isNullOrEmpty()) {
-      trimYtMusicTrack(node, parent, bounds, labelGapPx, scan)
+      val container = parent?.takeIf { isYtMusicTimeBar(it) }
+      if (container != null) {
+        scan.hasYtMusicTimeBar = true
+        trimWithLabels(container, bounds, labelGapPx)
+      } else if (isPlaybackTimeBar(node)) {
+        scan.hasYtMusicTimeBar = true
+        bounds.set(trimUnlabeledYtMusicTrack(bounds))
+      }
     }
     // An exact id is trusted on its own; weaker signals (TimeBar class / RangeInfo)
     // must be wide-and-short so we don't grab a volume or settings slider.
@@ -89,31 +99,21 @@ internal object SeekbarFinder {
     }
   }
 
-  private fun trimYtMusicTrack(
-    node: AccessibilityNodeInfo,
-    parent: AccessibilityNodeInfo?,
+  private fun trimWithLabels(
+    container: AccessibilityNodeInfo,
     bounds: Rect,
-    labelGapPx: Int,
-    scan: Scan
+    labelGapPx: Int
   ) {
-    if (isYtMusicTimeBar(parent)) {
-      scan.hasYtMusicTimeBar = true
-      parent?.let { container ->
-        val containerBounds = Rect().also { container.getBoundsInScreen(it) }
-        if (containerBounds.width() > MIN_BAR_WIDTH_PX) {
-          bounds.set(
-            trimYtMusicTimeLabels(
-              container = containerBounds,
-              elapsedLabel = childBounds(container, TIME_LABEL_CURRENT_SUFFIX),
-              totalLabel = childBounds(container, TIME_LABEL_TOTAL_SUFFIX),
-              labelGapPx = labelGapPx,
-            ),
-          )
-        }
-      }
-    } else if (isPlaybackTimeBar(node)) {
-      scan.hasYtMusicTimeBar = true
-      bounds.set(trimUnlabeledYtMusicTrack(bounds))
+    val containerBounds = Rect().also { container.getBoundsInScreen(it) }
+    if (containerBounds.width() > MIN_BAR_WIDTH_PX) {
+      bounds.set(
+        trimYtMusicTimeLabels(
+          container = containerBounds,
+          elapsedLabel = childBounds(container, TIME_LABEL_CURRENT_SUFFIX),
+          totalLabel = childBounds(container, TIME_LABEL_TOTAL_SUFFIX),
+          labelGapPx = labelGapPx,
+        ),
+      )
     }
   }
 
