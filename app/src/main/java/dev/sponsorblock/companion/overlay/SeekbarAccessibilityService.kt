@@ -229,7 +229,7 @@ class SeekbarAccessibilityService : AccessibilityService() {
     // description is an equally strong signal.
     if (
       cls == "android.widget.SeekBar" &&
-        (node.rangeInfo != null || isYtMusicTimeBar(parent) || isPlaybackTimeBar(node))
+      (node.rangeInfo != null || isYtMusicTimeBar(parent) || isPlaybackTimeBar(node))
     ) {
       return 4
     }
@@ -257,16 +257,17 @@ class SeekbarAccessibilityService : AccessibilityService() {
     }
     val view = SeekbarOverlayView(overlayContext ?: this)
     val params =
-      WindowManager.LayoutParams(
-        WindowManager.LayoutParams.MATCH_PARENT,
-        WindowManager.LayoutParams.MATCH_PARENT,
-        WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-          WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-          WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-          WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-        PixelFormat.TRANSLUCENT,
-      ).apply { gravity = Gravity.TOP or Gravity.START }
+      WindowManager
+        .LayoutParams(
+          WindowManager.LayoutParams.MATCH_PARENT,
+          WindowManager.LayoutParams.MATCH_PARENT,
+          WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+          WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+          PixelFormat.TRANSLUCENT,
+        ).apply { gravity = Gravity.TOP or Gravity.START }
     runCatching { windowManager?.addView(view, params) }
       .onSuccess { overlay = view }
   }
@@ -284,8 +285,10 @@ class SeekbarAccessibilityService : AccessibilityService() {
     private const val DEBOUNCE_MS = 250L
     private const val MAX_NODES = 3000
     private const val MIN_BAR_WIDTH_PX = 240
+
     // The time labels sit one standard 8 dp spacing unit outside the actual line.
     private const val YT_MUSIC_LABEL_GAP_DP = 8f
+
     // Real ids from YouTube 21.26.364 (aapt2 dump). The InlineTimeBarWrapper scrubber carries a
     // different id per context: inline watch, fullscreen large-controls, floaty/mini, and generic.
     private val SEEKBAR_ID_SUFFIXES =

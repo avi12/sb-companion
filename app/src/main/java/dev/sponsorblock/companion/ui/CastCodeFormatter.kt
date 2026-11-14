@@ -7,8 +7,7 @@ import android.widget.TextView
 /** Formatting and auto-fit for the TV pairing code shown on the main screen. */
 object CastCodeFormatter {
   /** Groups the digits (e.g. "12345678" -> "123 456 78"), or a placeholder when absent. */
-  fun format(code: String?): String =
-    code?.replace(Regex("(\\d{3})(?=\\d)"), "$1 ") ?: "- - - -"
+  fun format(code: String?): String = code?.replace(Regex("(\\d{3})(?=\\d)"), "$1 ") ?: "- - - -"
 
   /**
    * Sizes the cast code to fill its available width on any screen. XML autosize misbehaves for a

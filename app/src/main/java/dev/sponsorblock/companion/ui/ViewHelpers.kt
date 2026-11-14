@@ -28,11 +28,9 @@ fun Context.animationsEnabled(): Boolean =
 fun Context.hasNotificationAccess(): Boolean =
   NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
 
-fun Context.openNotificationSettings() =
-  startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+fun Context.openNotificationSettings() = startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
 
-fun Context.openAccessibilitySettings() =
-  startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+fun Context.openAccessibilitySettings() = startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
 
 /** True once the user has enabled our seekbar-overlay accessibility service in system settings. */
 fun Context.hasSeekbarAccessibility(): Boolean {

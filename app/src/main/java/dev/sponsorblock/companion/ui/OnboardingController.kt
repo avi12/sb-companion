@@ -72,6 +72,7 @@ class OnboardingController(
             .findViewById<MaterialButton>(R.id.grantButton)
             .setOnClickListener { activity.openNotificationSettings() }
         }
+
         1 -> {
           holder.itemView
             .findViewById<MaterialButton>(R.id.installButton)
@@ -83,6 +84,7 @@ class OnboardingController(
               pager.setCurrentItem(2, true)
             }
         }
+
         else -> {
           holder.itemView.findViewById<TextView>(R.id.step2Text).text =
             "Tap Cast and pick “${Config.CAST_DEVICE_NAME}”"

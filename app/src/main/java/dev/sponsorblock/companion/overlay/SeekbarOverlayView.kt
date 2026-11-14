@@ -56,11 +56,13 @@ class SeekbarOverlayView(
     val thickness = (BAR_DP * density).coerceAtMost(b.height().toFloat())
     val tall = b.height() > TALL_NODE_DP * density
     val cy =
-      (if (tall) {
-        b.bottom - thickness / 2f
-      } else {
-        b.exactCenterY()
-      }) - offY
+      (
+        if (tall) {
+          b.bottom - thickness / 2f
+        } else {
+          b.exactCenterY()
+        }
+      ) - offY
     val top = cy - thickness / 2f
     val bottom = cy + thickness / 2f
     val radius = thickness / 2f
@@ -93,6 +95,7 @@ class SeekbarOverlayView(
 
   companion object {
     private const val BAR_DP = 4f
+
     // Above this node height, treat bounds as a full-player container and pin the bar to its bottom.
     private const val TALL_NODE_DP = 72f
     private const val MIN_BAR_PX = 6f

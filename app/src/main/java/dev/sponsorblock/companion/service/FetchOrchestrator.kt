@@ -29,6 +29,7 @@ class FetchOrchestrator(
   // matching metadata across that hand-off, then discard it as soon as a different track appears.
   private var capturedId: String? = null
   private var capturedForTrack: TrackKey? = null
+
   // Keep the most recent response. A controller can be recreated as a cast connects/disconnects
   // while its metadata is unchanged; the new SkipEngine still needs the segments even though a
   // second network request would be redundant.

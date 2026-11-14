@@ -277,9 +277,11 @@ class LoungeClient(
   companion object {
     private const val MIN_BACKOFF_MS = 1_000L
     private const val MAX_BACKOFF_MS = 60_000L
+
     // Re-pair the bind session once the backoff has doubled a few times (SID is almost certainly
     // dead by ~8s of accumulated backoff).
     private const val REINIT_BACKOFF_MS = 8_000L
+
     // A poll that stayed open at least this long counts as a healthy long-poll even if it streamed
     // no lines (YouTube holds idle binds open), so we don't back off on normal reconnects.
     private const val HEALTHY_POLL_MS = 5_000L
