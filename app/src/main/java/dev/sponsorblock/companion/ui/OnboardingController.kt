@@ -39,7 +39,7 @@ class OnboardingController(
 
   /** Once access is granted on the first page, glide to "how it works". */
   fun onResume() {
-    if (!config.onboardingComplete && activity.hasNotificationAccess() && pager.currentItem == 0) {
+    if (!config.isOnboardingComplete && activity.hasNotificationAccess() && pager.currentItem == 0) {
       pager.setCurrentItem(1, true)
     }
   }
@@ -78,7 +78,7 @@ class OnboardingController(
           holder.itemView
             .findViewById<MaterialButton>(R.id.installButton)
             .setOnClickListener { view ->
-              config.castTvInstalled = true
+              config.isCastTvInstalled = true
               CastReceiverService.start(activity)
               (view as MaterialButton).text = "SponsorBlock TV ready"
               view.isEnabled = false
@@ -93,7 +93,7 @@ class OnboardingController(
           holder.itemView
             .findViewById<MaterialButton>(R.id.startButton)
             .setOnClickListener {
-              config.onboardingComplete = true
+              config.isOnboardingComplete = true
               onFinished()
             }
         }

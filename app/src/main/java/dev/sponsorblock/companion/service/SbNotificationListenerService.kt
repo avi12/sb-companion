@@ -39,7 +39,7 @@ class SbNotificationListenerService : NotificationListenerService() {
     ensureChannel()
     // Notification access is now active — stand up the on-phone "SponsorBlock TV" cast receiver
     // (unless the user uninstalled it from the main screen).
-    if (config.castTvInstalled) {
+    if (config.isCastTvInstalled) {
       CastReceiverService.start(this)
     }
     // A freshly captured cast videoId should (re)fetch even if the local metadata didn't change.

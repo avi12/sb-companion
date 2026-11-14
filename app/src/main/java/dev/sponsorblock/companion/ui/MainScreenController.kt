@@ -77,9 +77,9 @@ class MainScreenController(
     overlaySwitch = activity.findViewById(R.id.overlaySwitch)
     overlayBody = activity.findViewById(R.id.overlayBody)
     overlayButton = activity.findViewById(R.id.overlayButton)
-    overlaySwitch.isChecked = config.seekbarOverlayEnabled
+    overlaySwitch.isChecked = config.isSeekbarOverlayEnabled
     overlaySwitch.setOnCheckedChangeListener { _, checked ->
-      config.seekbarOverlayEnabled = checked
+      config.isSeekbarOverlayEnabled = checked
     }
     overlayButton.setOnClickListener { activity.openAccessibilitySettings() }
   }
@@ -105,7 +105,7 @@ class MainScreenController(
 
     fun render() {
       button.text =
-        if (config.castTvInstalled) {
+        if (config.isCastTvInstalled) {
           "Disable SponsorBlock TV"
         } else {
           "Enable SponsorBlock TV"
@@ -113,12 +113,12 @@ class MainScreenController(
     }
     render()
     button.setOnClickListener {
-      if (config.castTvInstalled) {
-        config.castTvInstalled = false
+      if (config.isCastTvInstalled) {
+        config.isCastTvInstalled = false
         config.screenId = null // forget the pairing so a reinstall is fresh
         CastReceiverService.stop(activity)
       } else {
-        config.castTvInstalled = true
+        config.isCastTvInstalled = true
         CastReceiverService.start(activity)
       }
       render()

@@ -97,7 +97,7 @@ class SeekbarAccessibilityService : AccessibilityService() {
   }
 
   private fun scanAndDraw() {
-    if (!config.seekbarOverlayEnabled) {
+    if (!config.isSeekbarOverlayEnabled) {
       setBounds(null)
       return
     }
@@ -124,7 +124,7 @@ class SeekbarAccessibilityService : AccessibilityService() {
    * docs/youtube-seekbar-reversing.md): an exact time-bar resource-id beats a "TimeBar" class name,
    * which beats a bare RangeInfo node. Within a quality tier we keep the SHORTEST node — in portrait
    * the only exposed time-bar node is a full-height player container (`watch_while_time_bar_view*`),
-   * so we accept tall id-matched nodes and let the overlay view anchor the strip to their bottom
+   * so we isAccepted tall id-matched nodes and let the overlay view anchor the strip to their bottom
    * edge (where the track actually sits). We stop early once we have an id-level match.
    */
   private fun findSeekbar(root: AccessibilityNodeInfo): Rect? {
@@ -138,7 +138,7 @@ class SeekbarAccessibilityService : AccessibilityService() {
     // line (and its container node) even after the controls auto-hide, so a bar node alone isn't
     // enough — we require a controls-only marker (the elapsed-time label / play-pause button) to be
     // present, and hide the overlay the moment it's gone.
-    var controlsVisible = false
+    var areControlsVisible = false
     // Some current YT Music fullscreen variants expose only the progress SeekBar and omit both
     // the elapsed-time/play-pause nodes and the named container from accessibility, even while
     // their controls are visibly on screen. Its "current of total" description is specific enough
@@ -150,7 +150,7 @@ class SeekbarAccessibilityService : AccessibilityService() {
       val (node, parent) = queue.removeFirst()
       val id = node.viewIdResourceName
       if (id != null && CONTROLS_MARKER_SUFFIXES.any { id.endsWith(it) }) {
-        controlsVisible = true
+        areControlsVisible = true
       }
       val quality = seekbarQuality(node, parent)
       if (quality > 0) {
@@ -183,8 +183,8 @@ class SeekbarAccessibilityService : AccessibilityService() {
         }
         // An exact id (quality 3) is trusted on its own; weaker signals (TimeBar class / RangeInfo)
         // must be wide-and-short so we don't grab a volume or settings slider.
-        val accept = r.width() > MIN_BAR_WIDTH_PX && (quality >= 3 || r.width() > r.height() * 2)
-        if (accept) {
+        val isAccepted = r.width() > MIN_BAR_WIDTH_PX && (quality >= 3 || r.width() > r.height() * 2)
+        if (isAccepted) {
           // Prefer the shortest match at a given quality — closest to the real track rect.
           if (quality > bestQuality || (quality == bestQuality && (best == null || r.height() < best.height()))) {
             best = r
@@ -196,7 +196,7 @@ class SeekbarAccessibilityService : AccessibilityService() {
         node.getChild(i)?.let { queue.add(it to node) }
       }
     }
-    return if (controlsVisible || hasYtMusicTimeBar) best else null
+    return if (areControlsVisible || hasYtMusicTimeBar) best else null
   }
 
   private fun childBounds(

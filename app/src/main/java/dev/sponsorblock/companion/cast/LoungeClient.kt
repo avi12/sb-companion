@@ -46,7 +46,7 @@ class LoungeClient(
 
   @Volatile private var lastAid = 0
 
-  @Volatile private var running = false
+  @Volatile private var isRunning = false
 
   // ---------- pairing ----------
 
@@ -129,20 +129,20 @@ class LoungeClient(
    * proves healthy again.
    */
   fun bindAndCapture(onVideoId: (String) -> Unit) {
-    running = true
+    isRunning = true
     var last: String? = null
     var backoffMs = MIN_BACKOFF_MS
-    var needInit = true
-    while (running) {
-      if (needInit) {
+    var shouldInit = true
+    while (isRunning) {
+      if (shouldInit) {
         if (!runCatching { initSession() }.isSuccess) {
           backoffMs = sleepBackoff(backoffMs)
           continue
         }
-        needInit = false
+        shouldInit = false
       }
       val startedAt = SystemClock.elapsedRealtime()
-      val healthy =
+      val isHealthy =
         streamRpc { videoId ->
           if (videoId != last) {
             last = videoId
@@ -150,14 +150,14 @@ class LoungeClient(
           }
         }
       val lastedMs = SystemClock.elapsedRealtime() - startedAt
-      if (healthy || lastedMs >= HEALTHY_POLL_MS) {
+      if (isHealthy || lastedMs >= HEALTHY_POLL_MS) {
         // A real long-poll (stayed open / streamed data): reconnect promptly, reset backoff.
         backoffMs = MIN_BACKOFF_MS
       } else {
         // Instant, empty return -> session/network is unhealthy. Back off before retrying, and once
         // the backoff is large enough assume the SID died and re-pair from initSession().
         if (backoffMs >= REINIT_BACKOFF_MS) {
-          needInit = true
+          shouldInit = true
         }
         backoffMs = sleepBackoff(backoffMs)
       }
@@ -167,7 +167,7 @@ class LoungeClient(
   /** Sleep for [current] backoff (interruptibly), returning the next (doubled, capped) value. */
   private fun sleepBackoff(current: Long): Long {
     var slept = 0L
-    while (running && slept < current) {
+    while (isRunning && slept < current) {
       val chunk = minOf(200L, current - slept)
       if (!runCatching { Thread.sleep(chunk) }.isSuccess) break
       slept += chunk
@@ -177,8 +177,8 @@ class LoungeClient(
 
   /** Stops polling and cancels any in-flight long-poll. */
   fun stop() {
-    running = false
-    // Interrupt an in-flight no-timeout bind immediately. Merely flipping [running] would leave
+    isRunning = false
+    // Interrupt an in-flight no-timeout bind immediately. Merely flipping [isRunning] would leave
     // the networking thread and radio held until YouTube eventually closes the long-poll.
     http.dispatcher.cancelAll()
   }
@@ -224,16 +224,16 @@ class LoungeClient(
       http.newCall(Request.Builder().url(url).build()).execute().use { resp ->
         if (!resp.isSuccessful) return@use false
         val source = resp.body?.source() ?: return@use false
-        var readAny = false
-        while (running && !source.exhausted()) {
+        var hasReadAny = false
+        while (isRunning && !source.exhausted()) {
           val line = source.readUtf8Line() ?: break
-          readAny = true
+          hasReadAny = true
           updateAid(line)
           Regex(""""videoId":"([A-Za-z0-9_-]{11})"""")
             .findAll(line)
             .forEach { onVideoId(it.groupValues[1]) }
         }
-        readAny
+        hasReadAny
       }
     }.getOrDefault(false)
   }

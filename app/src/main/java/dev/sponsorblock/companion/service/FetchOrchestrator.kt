@@ -112,10 +112,10 @@ class FetchOrchestrator(
     val skippable =
       all
         .filter { it.actionType == "skip" }
-        .map { it.copy(autoSkip = config.isAutoSkip(it.category)) }
+        .map { it.copy(isAutoSkip = config.isAutoSkip(it.category)) }
     Log.i(
       TAG,
-      "${cachedFetch?.videoId}: ${all.size} segments, ${skippable.count { it.autoSkip }} auto-skip",
+      "${cachedFetch?.videoId}: ${all.size} segments, ${skippable.count { it.isAutoSkip }} auto-skip",
     )
     engineProvider()?.setSegments(skippable)
     OverlayState.publish(all, durationMs / 1000.0)

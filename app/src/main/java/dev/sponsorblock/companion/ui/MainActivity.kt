@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
     onboarding.setup()
     mainScreen.setup()
 
-    showMain(config.onboardingComplete)
+    showMain(config.isOnboardingComplete)
 
     // Collapse the fullscreen demo on Back before leaving the screen.
     onBackPressedDispatcher.addCallback(this) {

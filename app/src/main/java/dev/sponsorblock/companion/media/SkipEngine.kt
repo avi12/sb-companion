@@ -56,7 +56,7 @@ class SkipEngine(
 
   /** Segments already filtered/flagged for auto-skip by the caller (config applied). */
   fun setSegments(list: List<Segment>) {
-    segments = list.filter { it.autoSkip }.sortedBy { it.start }
+    segments = list.filter { it.isAutoSkip }.sortedBy { it.start }
     reschedule()
   }
 

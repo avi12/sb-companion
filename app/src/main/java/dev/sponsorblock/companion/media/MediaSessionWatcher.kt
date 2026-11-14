@@ -33,19 +33,19 @@ class MediaSessionWatcher(
   private val listener =
     MediaSessionManager.OnActiveSessionsChangedListener { controllers -> emit(controllers) }
 
-  private var registered = false
+  private var isRegistered = false
 
   /** Starts listening for media sessions, retrying until notification access is ready. */
   fun start() = tryStart(attempt = 0)
 
   private fun tryStart(attempt: Int) {
-    val ok =
+    val isStarted =
       runCatching {
         msm.addOnActiveSessionsChangedListener(listener, listenerComponent)
         emit(msm.getActiveSessions(listenerComponent))
       }.isSuccess
-    if (ok) {
-      registered = true
+    if (isStarted) {
+      isRegistered = true
       return
     }
     // Listener grant not committed yet — back off and retry (caps at ~5 s total).
@@ -57,9 +57,9 @@ class MediaSessionWatcher(
   /** Stops listening and releases the controllers. */
   fun stop() {
     handler.removeCallbacksAndMessages(null)
-    if (registered) {
+    if (isRegistered) {
       runCatching { msm.removeOnActiveSessionsChangedListener(listener) }
-      registered = false
+      isRegistered = false
     }
   }
 

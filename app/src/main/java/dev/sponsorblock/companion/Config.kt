@@ -20,7 +20,7 @@ class Config(
     set(v) = prefs.edit { putString(KEY_SERVER, v) }
 
   /** Whether the on-phone "SponsorBlock TV" cast receiver should run. Toggled from the main screen. */
-  var castTvInstalled: Boolean
+  var isCastTvInstalled: Boolean
     // The Lounge receiver keeps a long-poll open while it waits for a cast. It must therefore be
     // an explicit opt-in — starting it just because notification access was granted wastes battery
     // even for people who only use the local MediaSession path.
@@ -28,12 +28,12 @@ class Config(
     set(v) = prefs.edit { putBoolean(KEY_TV_INSTALLED, v) }
 
   /** Whether to paint segment bars on the YouTube seekbar (needs the accessibility service on). */
-  var seekbarOverlayEnabled: Boolean
+  var isSeekbarOverlayEnabled: Boolean
     get() = prefs.getBoolean(KEY_OVERLAY, true)
     set(v) = prefs.edit { putBoolean(KEY_OVERLAY, v) }
 
   /** Whether the first-run onboarding (grant + how-it-works) has been completed. */
-  var onboardingComplete: Boolean
+  var isOnboardingComplete: Boolean
     get() = prefs.getBoolean(KEY_ONBOARDED, false)
     set(v) = prefs.edit { putBoolean(KEY_ONBOARDED, v) }
 

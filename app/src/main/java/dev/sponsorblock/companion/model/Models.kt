@@ -8,7 +8,7 @@ data class Segment(
   val actionType: String,
   val uuid: String,
   /** Resolved from config at fetch time: should this segment be auto-skipped. */
-  val autoSkip: Boolean = true,
+  val isAutoSkip: Boolean = true,
 )
 
 /** Per-category behaviour, mirrors the extension's CategorySkipOption. */
