@@ -1,0 +1,13 @@
+{
+  "name": "sb-companion",
+  "private": true,
+  "packageManager": "pnpm@12.18.0",
+  "scripts": {
+    "lint": "avi12-lint --only=kotlin",
+    "lint:fix": "avi12-lint --fix --only=kotlin"
+  },
+  "devDependencies": {
+    "avi12-lint": "github:avi12/lint-config#v0.7.0&path:/packages/avi12-lint",
+    "kotlin-config-avi12": "github:avi12/lint-config#v0.7.0&path:/packages/kotlin-config"
+  }
+}

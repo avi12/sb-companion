@@ -25,3 +25,6 @@ Thumbs.db
 
 # release signing (never commit the keystore or its creds)
 sb-release.jks
+
+# Lint tool cache
+.verify/

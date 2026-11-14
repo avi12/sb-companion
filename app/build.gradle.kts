@@ -86,6 +86,7 @@ ktlint {
 // — the oxlint half. Rules come from the shared preset.
 detekt {
   buildUponDefaultConfig = true
+  config.setFrom(files("$rootDir/node_modules/kotlin-config-avi12/detekt.yml").filter { it.exists() })
   autoCorrect = false
 }
 
