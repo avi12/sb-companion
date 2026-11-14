@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.addCallback
-import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
@@ -23,41 +22,35 @@ import dev.sponsorblock.companion.R
  */
 @OptIn(UnstableApi::class)
 class MainActivity : AppCompatActivity() {
-  private lateinit var config: Config
+  private val config by lazy { Config(this) }
 
-  private lateinit var onboardRoot: View
-  private lateinit var mainContainer: View
+  private val onboardRoot by lazy { findViewById<View>(R.id.onboardRoot) }
+  private val mainContainer by lazy { findViewById<View>(R.id.mainContainer) }
 
-  private lateinit var demo: DemoPlayerController
-  private lateinit var onboarding: OnboardingController
-  private lateinit var mainScreen: MainScreenController
+  private val demo by lazy {
+    DemoPlayerController(
+      activity = this,
+      rootFrame = findViewById(R.id.rootFrame),
+      expandRoot = findViewById(R.id.demoExpandRoot),
+      expandPlayer = findViewById<PlayerView>(R.id.demoExpandPlayer)
+    )
+  }
+  private val onboarding by lazy {
+    OnboardingController(
+      activity = this,
+      config = config,
+      pager = findViewById(R.id.onboardPager),
+      dots = findViewById<ViewGroup>(R.id.onboardDots),
+      demo = demo,
+      onFinished = { showMain(true) }
+    )
+  }
+  private val mainScreen by lazy { MainScreenController(this, config, mainContainer, demo) }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     DynamicColors.applyToActivityIfAvailable(this)
     super.onCreate(savedInstanceState)
-    config = Config(this)
     setContentView(R.layout.activity_main)
-
-    onboardRoot = findViewById(R.id.onboardRoot)
-    mainContainer = findViewById(R.id.mainContainer)
-
-    demo =
-      DemoPlayerController(
-        activity = this,
-        rootFrame = findViewById(R.id.rootFrame),
-        expandRoot = findViewById(R.id.demoExpandRoot),
-        expandPlayer = findViewById<PlayerView>(R.id.demoExpandPlayer)
-      )
-    onboarding =
-      OnboardingController(
-        activity = this,
-        config = config,
-        pager = findViewById(R.id.onboardPager),
-        dots = findViewById<ViewGroup>(R.id.onboardDots),
-        demo = demo,
-        onFinished = { showMain(true) }
-      )
-    mainScreen = MainScreenController(this, config, mainContainer, demo)
 
     onboarding.setup()
     mainScreen.setup()

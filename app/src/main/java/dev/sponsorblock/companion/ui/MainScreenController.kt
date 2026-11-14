@@ -32,18 +32,18 @@ class MainScreenController(
   private val mainContainer: View,
   private val demo: DemoPlayerController
 ) {
-  private lateinit var accessCard: MaterialCardView
-  private lateinit var accessTitle: TextView
-  private lateinit var accessBody: TextView
-  private lateinit var accessButton: MaterialButton
+  private val accessCard by lazy { activity.findViewById<MaterialCardView>(R.id.accessCard) }
+  private val accessTitle by lazy { activity.findViewById<TextView>(R.id.accessTitle) }
+  private val accessBody by lazy { activity.findViewById<TextView>(R.id.accessBody) }
+  private val accessButton by lazy { activity.findViewById<MaterialButton>(R.id.accessButton) }
 
-  private lateinit var overlaySwitch: MaterialSwitch
-  private lateinit var overlayBody: TextView
-  private lateinit var overlayButton: MaterialButton
+  private val overlaySwitch by lazy { activity.findViewById<MaterialSwitch>(R.id.overlaySwitch) }
+  private val overlayBody by lazy { activity.findViewById<TextView>(R.id.overlayBody) }
+  private val overlayButton by lazy { activity.findViewById<MaterialButton>(R.id.overlayButton) }
 
   /** Binds the views and wires the controls. */
   fun setup() {
-    setupAccessCard()
+    accessButton.setOnClickListener { activity.openNotificationSettings() }
     setupServerInput()
     demo.bind(mainContainer, R.id.mainDemoPlayer, R.id.mainDemoMock)
     setupCastCode()
@@ -58,14 +58,6 @@ class MainScreenController(
     refreshOverlayState()
   }
 
-  private fun setupAccessCard() {
-    accessCard = activity.findViewById(R.id.accessCard)
-    accessTitle = activity.findViewById(R.id.accessTitle)
-    accessBody = activity.findViewById(R.id.accessBody)
-    accessButton = activity.findViewById(R.id.accessButton)
-    accessButton.setOnClickListener { activity.openNotificationSettings() }
-  }
-
   private fun setupServerInput() {
     activity.findViewById<EditText>(R.id.serverInput).apply {
       setText(config.server)
@@ -74,9 +66,6 @@ class MainScreenController(
   }
 
   private fun setupOverlayCard() {
-    overlaySwitch = activity.findViewById(R.id.overlaySwitch)
-    overlayBody = activity.findViewById(R.id.overlayBody)
-    overlayButton = activity.findViewById(R.id.overlayButton)
     overlaySwitch.isChecked = config.isSeekbarOverlayEnabled
     overlaySwitch.setOnCheckedChangeListener { _, checked ->
       config.isSeekbarOverlayEnabled = checked
