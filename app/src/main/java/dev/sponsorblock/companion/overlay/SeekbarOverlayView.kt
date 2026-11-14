@@ -37,9 +37,9 @@ class SeekbarOverlayView(
   }
 
   override fun onDraw(canvas: Canvas) {
-    val b = barBounds ?: return
+    val bounds = barBounds ?: return
     val dur = OverlayState.durationSec
-    if (dur <= 0.0 || b.width() <= 0) {
+    if (dur <= 0.0 || bounds.width() <= 0) {
       return
     }
 
@@ -54,27 +54,27 @@ class SeekbarOverlayView(
     // Where to put the thin strip vertically. A thin bar node → center it. A tall node is a
     // full-player container (portrait's watch_while_time_bar_view*) whose track sits at the BOTTOM
     // edge, so anchor there instead of painting across the middle of the video.
-    val thickness = (BAR_DP * density).coerceAtMost(b.height().toFloat())
-    val tall = b.height() > TALL_NODE_DP * density
+    val thickness = (BAR_DP * density).coerceAtMost(bounds.height().toFloat())
+    val tall = bounds.height() > TALL_NODE_DP * density
     val cy =
       (
         if (tall) {
-          b.bottom - thickness / 2f
+          bounds.bottom - thickness / 2f
         } else {
-          b.exactCenterY()
+          bounds.exactCenterY()
         }
       ) - offY
     val top = cy - thickness / 2f
     val bottom = cy + thickness / 2f
     val radius = thickness / 2f
-    val left = b.left.toFloat() - offX
-    val widthPx = b.width().toFloat()
+    val left = bounds.left.toFloat() - offX
+    val widthPx = bounds.width().toFloat()
 
     for (seg in OverlayState.segments) {
       val cat = Category.byId(seg.category) ?: continue
       val startF = (seg.start / dur).coerceIn(0.0, 1.0)
       val endF = (seg.end / dur).coerceIn(0.0, 1.0)
-      var x0 = left + (startF * widthPx).toFloat()
+      val x0 = left + (startF * widthPx).toFloat()
       var x1 = left + (endF * widthPx).toFloat()
       // Give a zero/near-zero-width segment (e.g. a POI highlight) a visible minimum.
       if (x1 - x0 < MIN_BAR_PX) {
@@ -90,13 +90,16 @@ class SeekbarOverlayView(
     argb: Int,
     opacity: Float
   ): Int {
-    val a = (opacity * 255f).toInt().coerceIn(0, 255)
-    return (a shl 24) or (argb and 0x00FFFFFF)
+    val alpha = (opacity * MAX_ALPHA).toInt().coerceIn(0, MAX_ALPHA)
+    return alpha shl ALPHA_SHIFT or (argb and RGB_MASK)
   }
 
   /** Drawing constants. */
   companion object {
     private const val BAR_DP = 4f
+    private const val MAX_ALPHA = 255
+    private const val ALPHA_SHIFT = 24
+    private const val RGB_MASK = 0x00FFFFFF
 
     // Above this node height, treat bounds as a full-player container and pin the bar to its bottom.
     private const val TALL_NODE_DP = 72f

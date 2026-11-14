@@ -6,6 +6,10 @@ import android.widget.TextView
 
 /** Formatting and auto-fit for the TV pairing code shown on the main screen. */
 object CastCodeFormatter {
+  private const val MIN_SP = 14f
+  private const val MAX_SP = 60f
+  private const val SEARCH_STEPS = 12
+
   /** Groups the digits (e.g. "12345678" -> "123 456 78"), or a placeholder when absent. */
   fun format(code: String?): String = code?.replace(Regex("(\\d{3})(?=\\d)"), "$1 ") ?: "- - - -"
 
@@ -22,9 +26,9 @@ object CastCodeFormatter {
       }
       val paint = TextPaint(codeView.paint)
       val sd = codeView.resources.displayMetrics.scaledDensity
-      var lo = 14f
-      var hi = 60f
-      repeat(12) {
+      var lo = MIN_SP
+      var hi = MAX_SP
+      repeat(SEARCH_STEPS) {
         val mid = (lo + hi) / 2f
         paint.textSize = mid * sd
         if (paint.measureText(text) <= avail) {

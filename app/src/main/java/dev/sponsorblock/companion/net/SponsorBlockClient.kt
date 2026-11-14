@@ -8,6 +8,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import java.io.IOException
+import java.net.HttpURLConnection
 
 /**
  * Read-only SponsorBlock API client. Mirrors the extension's request exactly so any self-hosted
@@ -26,7 +27,7 @@ class SponsorBlockClient(
     actionTypes: List<String> = listOf("skip", "mute", "poi", "full"),
   ): List<Segment> =
     withContext(Dispatchers.IO) {
-      val prefix = Hashing.prefix(videoId, 5)
+      val prefix = Hashing.prefix(videoId)
       val url =
         "$server/api/skipSegments/$prefix"
           .toHttpUrl()
@@ -42,7 +43,7 @@ class SponsorBlockClient(
           .build()
       client.newCall(req).execute().use { resp ->
         when {
-          resp.code == 404 -> emptyList()
+          resp.code == HttpURLConnection.HTTP_NOT_FOUND -> emptyList()
           !resp.isSuccessful -> throw IOException("SponsorBlock HTTP ${resp.code}")
           else -> parse(resp.body?.string().orEmpty(), videoId)
         }
@@ -59,21 +60,21 @@ class SponsorBlockClient(
     val videos = JSONArray(body)
     val out = ArrayList<Segment>()
     for (i in 0 until videos.length()) {
-      val v = videos.getJSONObject(i)
-      if (v.optString("videoID") != videoId) {
+      val video = videos.getJSONObject(i)
+      if (video.optString("videoID") != videoId) {
         continue
       } // prefix returns many videos
-      val segs = v.getJSONArray("segments")
+      val segs = video.getJSONArray("segments")
       for (j in 0 until segs.length()) {
-        val s = segs.getJSONObject(j)
-        val pair = s.getJSONArray("segment")
+        val entry = segs.getJSONObject(j)
+        val pair = entry.getJSONArray("segment")
         out.add(
           Segment(
             start = pair.getDouble(0),
             end = pair.getDouble(1),
-            category = s.getString("category"),
-            actionType = s.optString("actionType", "skip"),
-            uuid = s.optString("UUID"),
+            category = entry.getString("category"),
+            actionType = entry.optString("actionType", "skip"),
+            uuid = entry.optString("UUID"),
           ),
         )
       }

@@ -28,7 +28,7 @@ class OnboardingController(
   /** Binds the onboarding views and shows the first step. */
   fun setup() {
     pager.adapter = OnboardAdapter()
-    buildDots(3)
+    buildDots(DOT_COUNT)
     pager.registerOnPageChangeCallback(
       object : ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) = updateDots(position)
@@ -103,8 +103,8 @@ class OnboardingController(
 
   private fun buildDots(count: Int) {
     dots.removeAllViews()
-    val size = (8 * activity.resources.displayMetrics.density).toInt()
-    val margin = (4 * activity.resources.displayMetrics.density).toInt()
+    val size = (DOT_SIZE_DP * activity.resources.displayMetrics.density).toInt()
+    val margin = (DOT_MARGIN_DP * activity.resources.displayMetrics.density).toInt()
     repeat(count) {
       val dot = View(activity)
       dot.background = activity.getDrawable(R.drawable.hero_circle)
@@ -121,7 +121,19 @@ class OnboardingController(
     val on = activity.themeColor(com.google.android.material.R.attr.colorPrimary)
     val off = activity.themeColor(com.google.android.material.R.attr.colorOutlineVariant)
     for (i in 0 until dots.childCount) {
-      dots.getChildAt(i).tintBackground(if (i == active) on else off)
+      val color =
+        if (i == active) {
+          on
+        } else {
+          off
+        }
+      dots.getChildAt(i).tintBackground(color)
     }
+  }
+
+  private companion object {
+    const val DOT_COUNT = 3
+    const val DOT_SIZE_DP = 8
+    const val DOT_MARGIN_DP = 4
   }
 }

@@ -1,5 +1,6 @@
 package dev.sponsorblock.companion.net
 
+import dev.sponsorblock.companion.model.MILLIS_PER_SECOND
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -29,11 +30,11 @@ object VideoIdResolver {
     channel: String
   ): String? =
     withContext(Dispatchers.IO) {
-      val q = URLEncoder.encode("$title $channel".trim(), "UTF-8")
+      val query = URLEncoder.encode("$title $channel".trim(), "UTF-8")
       val req =
         Request
           .Builder()
-          .url("https://www.youtube.com/results?search_query=$q")
+          .url("https://www.youtube.com/results?search_query=$query")
           .header("User-Agent", UA)
           .build()
       runCatching {
@@ -50,6 +51,6 @@ object VideoIdResolver {
     if (reportedMs <= 0) {
       return true
     } // unknown -> don't block, but caller may still fail closed
-    return kotlin.math.abs(reportedMs / 1000.0 - candidateSeconds) <= toleranceSec
+    return kotlin.math.abs(reportedMs / MILLIS_PER_SECOND - candidateSeconds) <= toleranceSec
   }
 }

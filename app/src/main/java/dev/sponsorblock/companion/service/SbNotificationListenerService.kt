@@ -90,16 +90,16 @@ class SbNotificationListenerService : NotificationListenerService() {
   }
 
   private fun postSkipNotice(seg: Segment) {
-    val n =
+    val notification =
       Notification
         .Builder(this, CHANNEL)
         .setSmallIcon(android.R.drawable.ic_media_ff)
         .setContentTitle("Skipped ${seg.category}")
         .setContentText("${seg.start.toInt()}s → ${seg.end.toInt()}s")
-        .setTimeoutAfter(4000)
+        .setTimeoutAfter(NOTICE_TIMEOUT_MS)
         .setOnlyAlertOnce(true)
         .build()
-    (getSystemService(NotificationManager::class.java)).notify(NOTICE_ID, n)
+    getSystemService(NotificationManager::class.java).notify(NOTICE_ID, notification)
   }
 
   private fun ensureChannel() {
@@ -115,5 +115,6 @@ class SbNotificationListenerService : NotificationListenerService() {
   companion object {
     private const val CHANNEL = "skips"
     private const val NOTICE_ID = 42
+    private const val NOTICE_TIMEOUT_MS = 4000L
   }
 }

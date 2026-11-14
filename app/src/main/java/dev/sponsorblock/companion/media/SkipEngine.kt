@@ -6,6 +6,7 @@ import android.media.session.PlaybackState
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import dev.sponsorblock.companion.model.MILLIS_PER_SECOND
 import dev.sponsorblock.companion.model.Segment
 
 /**
@@ -70,37 +71,32 @@ class SkipEngine(
 
   /** Extrapolated live position in ms, or null if not currently playing. */
   private fun livePositionMs(state: PlaybackState?): Long? {
-    val s = state ?: controller.playbackState ?: return null
-    if (s.state != PlaybackState.STATE_PLAYING) {
+    val playback = state ?: controller.playbackState ?: return null
+    if (playback.state != PlaybackState.STATE_PLAYING) {
       return null
     }
-    val speed =
-      if (s.playbackSpeed > 0.1f) {
-        s.playbackSpeed
-      } else {
-        1f
-      }
-    val delta = (nowMs() - s.lastPositionUpdateTime).coerceAtLeast(0)
-    return (s.position + delta * speed).toLong()
+    val delta = (nowMs() - playback.lastPositionUpdateTime).coerceAtLeast(0)
+    return (playback.position + delta * speedOf(playback)).toLong()
   }
+
+  private fun speedOf(state: PlaybackState): Float =
+    if (state.playbackSpeed > MIN_PLAYBACK_SPEED) {
+      state.playbackSpeed
+    } else {
+      1f
+    }
 
   private fun reschedule() {
     cancel()
     val state = controller.playbackState ?: return
     val posMs = livePositionMs(state) ?: return
-    val posSec = posMs / 1000.0
-    val seg = segments.firstOrNull { it.end > posSec + 0.2 } ?: return
-    if (posSec >= seg.start - 0.05) { // already inside -> skip now
+    val posSec = posMs / MILLIS_PER_SECOND
+    val seg = segments.firstOrNull { it.end > posSec + LOOKAHEAD_SEC } ?: return
+    if (posSec >= seg.start - ALREADY_INSIDE_SEC) { // already inside -> skip now
       doSkip(seg)
       return
     }
-    val speed =
-      if (state.playbackSpeed > 0.1f) {
-        state.playbackSpeed
-      } else {
-        1f
-      }
-    val delayMs = (((seg.start - posSec) * 1000.0) / speed).toLong().coerceAtLeast(0)
+    val delayMs = ((seg.start - posSec) * MILLIS_PER_SECOND / speedOf(state)).toLong().coerceAtLeast(0)
     Runnable { verifyThenSkip(seg) }.also {
       pending = it
       handler.postDelayed(it, delayMs)
@@ -109,9 +105,9 @@ class SkipEngine(
 
   private fun verifyThenSkip(seg: Segment) {
     val posMs = livePositionMs(controller.playbackState) ?: return reschedule()
-    val posSec = posMs / 1000.0
+    val posSec = posMs / MILLIS_PER_SECOND
     // guard: only skip if we really landed at/inside the segment (not an ad shift or user seek)
-    if (posSec in (seg.start - GUARD_SEC)..seg.end) {
+    if (posSec in seg.start - GUARD_SEC..seg.end) {
       doSkip(seg)
     } else {
       reschedule()
@@ -119,12 +115,12 @@ class SkipEngine(
   }
 
   private fun doSkip(seg: Segment) {
-    val targetMs = (seg.end * 1000).toLong() + EPSILON_MS // land just past the end
+    val targetMs = (seg.end * MILLIS_PER_SECOND).toLong() + EPSILON_MS // land just past the end
     android.util.Log.i("SkipEngine", "SKIP ${seg.category} ${seg.start.toInt()}s->${seg.end.toInt()}s")
     controller.transportControls.seekTo(targetMs)
     onSkip(seg)
     // the seek produces a fresh PlaybackState (-> callback -> reschedule); also nudge defensively
-    handler.postDelayed({ reschedule() }, 600)
+    handler.postDelayed({ reschedule() }, RESCHEDULE_DELAY_MS)
   }
 
   private fun cancel() {
@@ -136,5 +132,9 @@ class SkipEngine(
   companion object {
     private const val EPSILON_MS = 300L // absorb seek latency so we don't fall back into the segment
     private const val GUARD_SEC = 1.5
+    private const val MIN_PLAYBACK_SPEED = 0.1f
+    private const val LOOKAHEAD_SEC = 0.2
+    private const val ALREADY_INSIDE_SEC = 0.05
+    private const val RESCHEDULE_DELAY_MS = 600L
   }
 }

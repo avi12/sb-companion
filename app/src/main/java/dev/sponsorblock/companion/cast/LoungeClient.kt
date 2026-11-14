@@ -168,8 +168,10 @@ class LoungeClient(
   private fun sleepBackoff(current: Long): Long {
     var slept = 0L
     while (isRunning && slept < current) {
-      val chunk = minOf(200L, current - slept)
-      if (!runCatching { Thread.sleep(chunk) }.isSuccess) break
+      val chunk = minOf(SLEEP_CHUNK_MS, current - slept)
+      if (!runCatching { Thread.sleep(chunk) }.isSuccess) {
+        break
+      }
       slept += chunk
     }
     return (current * 2).coerceAtMost(MAX_BACKOFF_MS)
@@ -187,7 +189,7 @@ class LoungeClient(
     sid = null
     gsessionid = null
     lastAid = 0
-    val rid = (41000..49999).random()
+    val rid = (MIN_RID..MAX_RID).random()
     val url =
       bindUrl { b ->
         b
@@ -222,7 +224,9 @@ class LoungeClient(
       }
     return runCatching {
       http.newCall(Request.Builder().url(url).build()).execute().use { resp ->
-        if (!resp.isSuccessful) return@use false
+        if (!resp.isSuccessful) {
+          return@use false
+        }
         val source = resp.body?.source() ?: return@use false
         var hasReadAny = false
         while (isRunning && !source.exhausted()) {
@@ -249,7 +253,7 @@ class LoungeClient(
 
   /** Builds a /bind URL with the params common to every request, plus [extra]. */
   private fun bindUrl(extra: (okhttp3.HttpUrl.Builder) -> Unit): String {
-    val b =
+    val urlBuilder =
       "$BASE/api/lounge/bc/bind"
         .toHttpUrl()
         .newBuilder()
@@ -271,16 +275,20 @@ class LoungeClient(
             .randomUUID()
             .toString()
             .replace("-", "")
-            .substring(0, 12)
+            .substring(0, ZX_LENGTH)
         ).addQueryParameter("t", "1")
-    extra(b)
-    return b.build().toString()
+    extra(urlBuilder)
+    return urlBuilder.build().toString()
   }
 
   /** Lounge protocol constants. */
   companion object {
     private const val MIN_BACKOFF_MS = 1_000L
     private const val MAX_BACKOFF_MS = 60_000L
+    private const val SLEEP_CHUNK_MS = 200L
+    private const val MIN_RID = 41_000
+    private const val MAX_RID = 49_999
+    private const val ZX_LENGTH = 12
 
     // Re-pair the bind session once the backoff has doubled a few times (SID is almost certainly
     // dead by ~8s of accumulated backoff).

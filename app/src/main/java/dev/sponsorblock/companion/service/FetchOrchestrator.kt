@@ -4,6 +4,7 @@ import android.util.Log
 import dev.sponsorblock.companion.Config
 import dev.sponsorblock.companion.cast.CastCapture
 import dev.sponsorblock.companion.media.SkipEngine
+import dev.sponsorblock.companion.model.MILLIS_PER_SECOND
 import dev.sponsorblock.companion.model.Segment
 import dev.sponsorblock.companion.net.SponsorBlockClient
 import dev.sponsorblock.companion.net.VideoIdResolver
@@ -118,7 +119,7 @@ class FetchOrchestrator(
       "${cachedFetch?.videoId}: ${all.size} segments, ${skippable.count { it.isAutoSkip }} auto-skip",
     )
     engineProvider()?.setSegments(skippable)
-    OverlayState.publish(all, durationMs / 1000.0)
+    OverlayState.publish(all, durationMs / MILLIS_PER_SECOND)
   }
 
   private data class CachedFetch(
