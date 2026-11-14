@@ -5,7 +5,6 @@ import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.json.JSONObject
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -30,6 +29,11 @@ class LoungeClient(
       .readTimeout(0, TimeUnit.MILLISECONDS) // bind is a long-poll; never time it out
       .build(),
 ) {
+  private data class BindState(
+    val backoffMs: Long = MIN_BACKOFF_MS,
+    val shouldInit: Boolean = true
+  )
+
   /** A pairing code the user types into YouTube's Cast picker. */
   data class Pairing(
     val screenId: String,
@@ -37,8 +41,7 @@ class LoungeClient(
     val pairingCode: String
   )
 
-  private lateinit var loungeToken: String
-  private lateinit var screenId: String
+  private var pairing: Pairing? = null
 
   // Bind-channel session state.
   private var sid: String? = null
@@ -52,66 +55,9 @@ class LoungeClient(
 
   /** Registers a screen and returns the code to show the user. */
   fun requestPairing(): Pairing {
-    screenId = existingScreenId ?: generateScreenId()
-    loungeToken = getLoungeToken(screenId)
-    val code = getPairingCode(screenId, loungeToken)
-    return Pairing(screenId, loungeToken, code)
-  }
-
-  private fun generateScreenId(): String =
-    http
-      .newCall(Request.Builder().url("$BASE/api/lounge/pairing/generate_screen_id").build())
-      .execute()
-      .use {
-        it.body
-          ?.string()
-          ?.trim()
-          .orEmpty()
-      }.ifEmpty { error("empty screen id") }
-
-  private fun getLoungeToken(screenId: String): String {
-    val body = FormBody.Builder().add("screen_ids", screenId).build()
-    val req =
-      Request
-        .Builder()
-        .url("$BASE/api/lounge/pairing/get_lounge_token_batch")
-        .post(body)
-        .build()
-    http.newCall(req).execute().use { resp ->
-      return JSONObject(resp.body?.string().orEmpty())
-        .getJSONArray("screens")
-        .getJSONObject(0)
-        .getString("loungeToken")
-    }
-  }
-
-  private fun getPairingCode(
-    screenId: String,
-    loungeToken: String
-  ): String {
-    val body =
-      FormBody
-        .Builder()
-        .add("access_type", "permanent")
-        .add("app", screenApp)
-        .add("lounge_token", loungeToken)
-        .add("screen_id", screenId)
-        .add("screen_name", screenName)
-        .add("device_id", deviceId)
-        .build()
-    val req =
-      Request
-        .Builder()
-        .url("$BASE/api/lounge/pairing/get_pairing_code?ctx=pair")
-        .post(body)
-        .build()
-    http.newCall(req).execute().use { resp ->
-      return resp.body
-        ?.string()
-        ?.trim()
-        .orEmpty()
-        .ifEmpty { error("empty pairing code") }
-    }
+    val result = LoungePairing(http, deviceId, screenName, screenApp).pair(existingScreenId)
+    pairing = result
+    return result
   }
 
   // ---------- bind channel ----------
@@ -131,37 +77,36 @@ class LoungeClient(
   fun bindAndCapture(onVideoId: (String) -> Unit) {
     isRunning = true
     var last: String? = null
-    var backoffMs = MIN_BACKOFF_MS
-    var shouldInit = true
+    var state = BindState()
     while (isRunning) {
-      if (shouldInit) {
-        if (!runCatching { initSession() }.isSuccess) {
-          backoffMs = sleepBackoff(backoffMs)
-          continue
-        }
-        shouldInit = false
-      }
-      val startedAt = SystemClock.elapsedRealtime()
-      val isHealthy =
-        streamRpc { videoId ->
+      state =
+        nextState(state) { videoId ->
           if (videoId != last) {
             last = videoId
             onVideoId(videoId)
           }
         }
-      val lastedMs = SystemClock.elapsedRealtime() - startedAt
-      if (isHealthy || lastedMs >= HEALTHY_POLL_MS) {
-        // A real long-poll (stayed open / streamed data): reconnect promptly, reset backoff.
-        backoffMs = MIN_BACKOFF_MS
-      } else {
-        // Instant, empty return -> session/network is unhealthy. Back off before retrying, and once
-        // the backoff is large enough assume the SID died and re-pair from initSession().
-        if (backoffMs >= REINIT_BACKOFF_MS) {
-          shouldInit = true
-        }
-        backoffMs = sleepBackoff(backoffMs)
-      }
     }
+  }
+
+  private fun nextState(
+    state: BindState,
+    onVideoId: (String) -> Unit
+  ): BindState {
+    if (state.shouldInit && !runCatching { initSession() }.isSuccess) {
+      return state.copy(backoffMs = sleepBackoff(state.backoffMs))
+    }
+    val startedAt = SystemClock.elapsedRealtime()
+    val isHealthy = streamRpc(onVideoId)
+    val lastedMs = SystemClock.elapsedRealtime() - startedAt
+    if (isHealthy || lastedMs >= HEALTHY_POLL_MS) {
+      // A real long-poll (stayed open / streamed data): reconnect promptly, reset backoff.
+      return BindState(shouldInit = false)
+    }
+    // Instant, empty return -> session/network is unhealthy. Back off before retrying, and once
+    // the backoff is large enough assume the SID died and re-pair from initSession().
+    val shouldReinit = state.backoffMs >= REINIT_BACKOFF_MS
+    return BindState(backoffMs = sleepBackoff(state.backoffMs), shouldInit = shouldReinit)
   }
 
   /** Sleep for [current] backoff (interruptibly), returning the next (doubled, capped) value. */
@@ -254,7 +199,7 @@ class LoungeClient(
   /** Builds a /bind URL with the params common to every request, plus [extra]. */
   private fun bindUrl(extra: (okhttp3.HttpUrl.Builder) -> Unit): String {
     val urlBuilder =
-      "$BASE/api/lounge/bc/bind"
+      "$LOUNGE_BASE/api/lounge/bc/bind"
         .toHttpUrl()
         .newBuilder()
         .addQueryParameter("device", "LOUNGE_SCREEN")
@@ -266,7 +211,7 @@ class LoungeClient(
         .addQueryParameter("capabilities", "dsp,mic,dpa,ntb")
         .addQueryParameter("cst", "m")
         .addQueryParameter("mdxVersion", "2")
-        .addQueryParameter("loungeIdToken", loungeToken)
+        .addQueryParameter("loungeIdToken", checkNotNull(pairing).loungeToken)
         .addQueryParameter("VER", "8")
         .addQueryParameter("v", "2")
         .addQueryParameter(
@@ -297,7 +242,6 @@ class LoungeClient(
     // A poll that stayed open at least this long counts as a healthy long-poll even if it streamed
     // no lines (YouTube holds idle binds open), so we don't back off on normal reconnects.
     private const val HEALTHY_POLL_MS = 5_000L
-    private const val BASE = "https://www.youtube.com"
     private const val DEVICE_INFO =
       """{"brand":"Generic","model":"SmartTV","year":0,"os":"Windows","osVersion":"10.0",""" +
         """"chipset":"","clientName":"TVHTML5","dialAdditionalDataSupportLevel":"unsupported",""" +
