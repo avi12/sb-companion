@@ -1,6 +1,7 @@
 package dev.sponsorblock.companion.net
 
 import dev.sponsorblock.companion.model.MILLIS_PER_SECOND
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -27,9 +28,10 @@ object VideoIdResolver {
   /** Searches YouTube for the title and channel and returns the first video id, or null. */
   suspend fun resolve(
     title: String,
-    channel: String
+    channel: String,
+    dispatcher: CoroutineDispatcher = Dispatchers.IO
   ): String? =
-    withContext(Dispatchers.IO) {
+    withContext(dispatcher) {
       val query = URLEncoder.encode("$title $channel".trim(), "UTF-8")
       val req =
         Request

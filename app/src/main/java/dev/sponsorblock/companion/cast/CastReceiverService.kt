@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import dev.sponsorblock.companion.Config
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,10 +25,10 @@ import kotlinx.coroutines.launch
  *
  * Status: the pairing pipeline (screen id -> lounge token -> pairing code) is implemented and runs
  * here. The bind long-poll that captures the cast videoId — and then feeds the existing fetch ->
- * SkipEngine path — is the next slice (marked TODO below).
+ * SkipEngine path — is the next slice (marked TODO(avi) below).
  */
 class CastReceiverService : Service() {
-  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+  private val scope = createScope()
   private val config by lazy { Config(this) }
   private var receiverJob: Job? = null
   private var client: LoungeClient? = null
@@ -129,3 +130,5 @@ class CastReceiverService : Service() {
     }
   }
 }
+
+private fun createScope(dispatcher: CoroutineDispatcher = Dispatchers.IO) = CoroutineScope(SupervisorJob() + dispatcher)

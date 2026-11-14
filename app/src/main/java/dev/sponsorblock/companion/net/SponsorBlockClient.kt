@@ -1,6 +1,7 @@
 package dev.sponsorblock.companion.net
 
 import dev.sponsorblock.companion.model.Segment
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -19,6 +20,7 @@ import java.net.HttpURLConnection
 class SponsorBlockClient(
   private val server: String = DEFAULT_SERVER,
   private val client: OkHttpClient = OkHttpClient(),
+  private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
   /** Fetches the video's segments by hash prefix and keeps those of the exact video id. */
   suspend fun fetch(
@@ -26,7 +28,7 @@ class SponsorBlockClient(
     categories: List<String>,
     actionTypes: List<String> = listOf("skip", "mute", "poi", "full"),
   ): List<Segment> =
-    withContext(Dispatchers.IO) {
+    withContext(dispatcher) {
       val prefix = Hashing.prefix(videoId)
       val url =
         "$server/api/skipSegments/$prefix"
