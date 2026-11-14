@@ -11,7 +11,7 @@ class SeekbarGeometryInstrumentedTest {
   @Test
   fun trimsYtMusicTimeLabelsFromTheDrawableTrack() {
     val track =
-      SeekbarAccessibilityService.trimYtMusicTimeLabels(
+      SeekbarFinder.trimYtMusicTimeLabels(
         container = Rect(0, 954, 2298, 1080),
         elapsedLabel = Rect(32, 954, 112, 1080),
         totalLabel = Rect(2218, 954, 2298, 1080),
@@ -24,7 +24,7 @@ class SeekbarGeometryInstrumentedTest {
   @Test
   fun trimsTheFlattenedFullscreenYtMusicSeekbar() {
     val track =
-      SeekbarAccessibilityService.trimUnlabeledYtMusicTrack(
+      SeekbarFinder.trimUnlabeledYtMusicTrack(
         Rect(0, 954, 2424, 1080),
       )
 
