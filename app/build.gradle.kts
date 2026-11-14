@@ -83,10 +83,9 @@ ktlint {
 }
 
 // detekt carries the correctness rules (val-over-var, unused code, potential bugs)
-// — the oxlint half. Rule tuning lives in config/detekt/detekt.yml.
+// — the oxlint half. Rules come from the shared preset.
 detekt {
   buildUponDefaultConfig = true
-  config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
   autoCorrect = false
 }
 
