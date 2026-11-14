@@ -53,7 +53,9 @@ enum class Category(
   ),
   CHAPTER("chapter", 0xFFFFD983, SkipMode.SHOW, "Chapter", "Video chapter markers");
 
+  /** Lookup helpers. */
   companion object {
+    /** The category with the given SponsorBlock id, or null. */
     fun byId(id: String): Category? = entries.firstOrNull { it.id == id }
   }
 }

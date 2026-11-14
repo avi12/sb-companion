@@ -27,6 +27,7 @@ class SeekbarOverlayView(
   /** Screen-space bounds of the YouTube seekbar, or null to draw nothing. */
   private var barBounds: Rect? = null
 
+  /** Moves the bars to the seekbar bounds, or hides them when null. */
   fun update(bounds: Rect?) {
     if (bounds == barBounds) {
       return
@@ -93,6 +94,7 @@ class SeekbarOverlayView(
     return (a shl 24) or (argb and 0x00FFFFFF)
   }
 
+  /** Drawing constants. */
   companion object {
     private const val BAR_DP = 4f
 

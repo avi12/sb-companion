@@ -150,6 +150,7 @@ class DemoPlayerController(
     players.forEach { it.release() }
   }
 
+  /** Demo player constants. */
   companion object {
     private const val EXPAND_MS = 300L
     private const val SHRINK_MS = 230L

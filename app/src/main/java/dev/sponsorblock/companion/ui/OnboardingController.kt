@@ -25,6 +25,7 @@ class OnboardingController(
   private val demo: DemoPlayerController,
   private val onFinished: () -> Unit
 ) {
+  /** Binds the onboarding views and shows the first step. */
   fun setup() {
     pager.adapter = OnboardAdapter()
     buildDots(3)

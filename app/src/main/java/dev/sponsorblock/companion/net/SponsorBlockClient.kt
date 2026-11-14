@@ -19,6 +19,7 @@ class SponsorBlockClient(
   private val server: String = DEFAULT_SERVER,
   private val client: OkHttpClient = OkHttpClient(),
 ) {
+  /** Fetches the video's segments by hash prefix and keeps those of the exact video id. */
   suspend fun fetch(
     videoId: String,
     categories: List<String>,
@@ -80,6 +81,7 @@ class SponsorBlockClient(
     return out.sortedBy { it.start }
   }
 
+  /** Server defaults. */
   companion object {
     const val DEFAULT_SERVER = "https://sponsor.ajay.app"
     const val CLIENT_NAME = "sb-android-companion/0.0.0"

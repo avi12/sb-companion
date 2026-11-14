@@ -41,12 +41,14 @@ class SkipEngine(
       override fun onSessionDestroyed() = detach()
     }
 
+  /** Starts watching the playback position. */
   fun attach() {
     controller.registerCallback(callback, handler)
     emitMetadata(controller.metadata)
     reschedule()
   }
 
+  /** Stops watching the playback position. */
   fun detach() {
     cancel()
     runCatching { controller.unregisterCallback(callback) }
@@ -130,6 +132,7 @@ class SkipEngine(
     pending = null
   }
 
+  /** Timing constants for seeking. */
   companion object {
     private const val EPSILON_MS = 300L // absorb seek latency so we don't fall back into the segment
     private const val GUARD_SEC = 1.5

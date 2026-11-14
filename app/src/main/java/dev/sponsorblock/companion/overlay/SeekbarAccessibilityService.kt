@@ -279,6 +279,7 @@ class SeekbarAccessibilityService : AccessibilityService() {
     overlayContext = null
   }
 
+  /** Service constants. */
   companion object {
     // Bounds only change when controls/layout change, not for every playback-position update.
     // This keeps the accessibility tree walk cheap while a player is foregrounded.

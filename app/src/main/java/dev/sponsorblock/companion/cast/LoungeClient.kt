@@ -30,6 +30,7 @@ class LoungeClient(
       .readTimeout(0, TimeUnit.MILLISECONDS) // bind is a long-poll; never time it out
       .build(),
 ) {
+  /** A pairing code the user types into YouTube's Cast picker. */
   data class Pairing(
     val screenId: String,
     val loungeToken: String,
@@ -49,6 +50,7 @@ class LoungeClient(
 
   // ---------- pairing ----------
 
+  /** Registers a screen and returns the code to show the user. */
   fun requestPairing(): Pairing {
     screenId = existingScreenId ?: generateScreenId()
     loungeToken = getLoungeToken(screenId)
@@ -173,6 +175,7 @@ class LoungeClient(
     return (current * 2).coerceAtMost(MAX_BACKOFF_MS)
   }
 
+  /** Stops polling and cancels any in-flight long-poll. */
   fun stop() {
     running = false
     // Interrupt an in-flight no-timeout bind immediately. Merely flipping [running] would leave
@@ -274,6 +277,7 @@ class LoungeClient(
     return b.build().toString()
   }
 
+  /** Lounge protocol constants. */
   companion object {
     private const val MIN_BACKOFF_MS = 1_000L
     private const val MAX_BACKOFF_MS = 60_000L

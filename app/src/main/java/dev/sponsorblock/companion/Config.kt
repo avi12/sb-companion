@@ -51,13 +51,16 @@ class Config(
     get() = prefs.getString(KEY_SCREEN_ID, null)
     set(v) = prefs.edit { putString(KEY_SCREEN_ID, v) }
 
+  /** Skip mode chosen for the category. */
   fun mode(category: Category): SkipMode = SkipMode.valueOf(prefs.getString(key(category), category.defaultMode.name)!!)
 
+  /** Stores the skip mode for the category. */
   fun setMode(
     category: Category,
     mode: SkipMode
   ) = prefs.edit { putString(key(category), mode.name) }
 
+  /** Whether the category with this id is set to skip on its own. */
   fun isAutoSkip(categoryId: String): Boolean = Category.byId(categoryId)?.let { mode(it) == SkipMode.AUTO } ?: false
 
   /** Categories to request from the server (anything not fully disabled). */
@@ -66,6 +69,7 @@ class Config(
 
   private fun key(c: Category) = "mode_${c.id}"
 
+  /** Preference keys and defaults. */
   companion object {
     /** Friendly name the fake cast receiver advertises in YouTube's Cast picker. */
     const val CAST_DEVICE_NAME = "SponsorBlock TV"

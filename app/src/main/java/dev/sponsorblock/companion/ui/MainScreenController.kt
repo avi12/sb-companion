@@ -41,6 +41,7 @@ class MainScreenController(
   private lateinit var overlayBody: TextView
   private lateinit var overlayButton: MaterialButton
 
+  /** Binds the views and wires the controls. */
   fun setup() {
     setupAccessCard()
     setupServerInput()
@@ -51,6 +52,7 @@ class MainScreenController(
     buildCategoryRows()
   }
 
+  /** Refreshes the permission and service state. */
   fun onResume() {
     refreshAccessState()
     refreshOverlayState()

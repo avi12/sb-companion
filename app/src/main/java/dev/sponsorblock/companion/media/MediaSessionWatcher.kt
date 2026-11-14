@@ -35,6 +35,7 @@ class MediaSessionWatcher(
 
   private var registered = false
 
+  /** Starts listening for media sessions, retrying until notification access is ready. */
   fun start() = tryStart(attempt = 0)
 
   private fun tryStart(attempt: Int) {
@@ -53,6 +54,7 @@ class MediaSessionWatcher(
     }
   }
 
+  /** Stops listening and releases the controllers. */
   fun stop() {
     handler.removeCallbacksAndMessages(null)
     if (registered) {

@@ -20,6 +20,7 @@ object OverlayState {
   @Volatile
   var onChange: (() -> Unit)? = null
 
+  /** Replaces the shared segments and duration and notifies the overlay. */
   fun publish(
     segments: List<Segment>,
     durationSec: Double
@@ -29,6 +30,7 @@ object OverlayState {
     onChange?.invoke()
   }
 
+  /** Drops the shared segments and notifies the overlay. */
   fun clear() {
     if (segments.isEmpty() && durationSec == 0.0) {
       return

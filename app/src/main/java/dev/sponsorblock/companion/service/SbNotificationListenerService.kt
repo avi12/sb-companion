@@ -111,6 +111,7 @@ class SbNotificationListenerService : NotificationListenerService() {
     }
   }
 
+  /** Notification constants. */
   companion object {
     private const val CHANNEL = "skips"
     private const val NOTICE_ID = 42

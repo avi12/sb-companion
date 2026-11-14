@@ -111,6 +111,7 @@ class CastReceiverService : Service() {
 
   private fun String.spaced() = replace(Regex("(\\d{3})(?=\\d)"), "$1 ")
 
+  /** Notification and service constants. */
   companion object {
     private const val TAG = "CastReceiver"
     private const val CHANNEL = "cast_receiver"

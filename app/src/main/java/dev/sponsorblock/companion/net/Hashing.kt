@@ -9,11 +9,13 @@ import java.security.MessageDigest
  * prefix; we filter to the exact videoID client-side.
  */
 object Hashing {
+  /** Lowercase hex SHA-256 of the input. */
   fun sha256Hex(input: String): String {
     val digest = MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8))
     return digest.joinToString("") { "%02x".format(it) }
   }
 
+  /** The first [len] hex characters of the video id's hash. */
   fun prefix(
     videoId: String,
     len: Int = 5

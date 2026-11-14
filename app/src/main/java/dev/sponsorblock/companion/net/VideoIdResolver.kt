@@ -23,6 +23,7 @@ object VideoIdResolver {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
       "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
+  /** Searches YouTube for the title and channel and returns the first video id, or null. */
   suspend fun resolve(
     title: String,
     channel: String
